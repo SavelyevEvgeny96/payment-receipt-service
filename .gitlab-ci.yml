@@ -1,0 +1,40 @@
+variables:
+  # Наименование сервиса, будет использовано в качестве составной части пути и в логах
+  SERVICE: '$CI_PROJECT_NAME'
+  # Требуемое кол-во инстансов (только для прод среды)
+  SERVICE_REPLICAS: 1
+
+  # Рабочий порт приложения
+  SERVER_PORT: 8080
+  # Порт для проверки работоспособности приложения, только для k8s
+  MANAGEMENT_SERVER_PORT: 8080
+  # Запрос CPU (минимальное требуемое кол-во)
+  RESOURCES_REQUESTS_CPU: 100m
+  # Запрос памяти (минимальное требуемое кол-во)
+  RESOURCES_REQUESTS_MEMORY: 128Mi
+  # Лимит CPU (максимальное требуемое кол-во)
+  # # ЦПУ не лимитировано
+  # Лимит памяти (максимальное требуемое кол-во). Под будет помечен для удаления при превышении!
+  RESOURCES_LIMITS_MEMORY: 384Mi
+
+  # Версия Java для сборки приложения
+  DOCKER_BUILD_JAVA_VERSION: 21 # 6/7/8/9/10/11/17/21
+  # Версия Java для запуска приложения
+  DOCKER_RUN_JAVA_VERSION: 21 # 6/7/8/9/10/11/17/21
+  # Параметры запуска приложения на различных средах
+  JAVA_OPTS_DEV: '-Dspring.profiles.active=dev'
+  JAVA_OPTS_TEST: '-Dspring.profiles.active=test'
+  JAVA_OPTS_STAGE: '-Dspring.profiles.active=stage'
+  JAVA_OPTS_PROD: '-Dspring.profiles.active=prod'
+
+  # Пути actuator'а для проверки - только для k8s
+  K8S_LIVENESS_PROBE: '/actuator/health/liveness'
+  K8S_READINESS_PROBE: '/actuator/health/readiness'
+
+  # Исключить сервис из автоматического логирования
+  EXCLUDE_FROM_LOGGING: 'false' # false/true
+
+include:
+  - project: 'infrastructure/common/gitlab-ci'
+    ref: master
+    file: '/java/k8s/v6/.gitlab-ci.yml'

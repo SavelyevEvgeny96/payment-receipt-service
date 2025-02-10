@@ -1,0 +1,64 @@
+app:
+  info:
+    application_name: ${PROJECT_NAME:app service}
+    version: ${PROJECT_VERSION:1.0.0}
+    description: ${PROJECT_DESCRIPTION:Payment Receipt Service}
+    artifact_Id: ${PROJECT_ARTIFACTID:payment-receipt-service}
+    group_Id: ${PROJECT_GROUPID:ru.sogaz.site}
+    app_profile: ${ENVIRONMENT:dev}
+    java-version: ${JAVA_VERSION:21}
+
+server:
+  port: ${SERVER_PORT:8080}
+  use-forward-headers: true
+  main.allow-bean-definition-overriding: true
+
+spring:
+  application:
+    name: payment-receipt-service
+  profiles:
+    active: ${ENVIRONMENT:dev}
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${ENVIRONMENT:jdbc:postgresql://localhost:5432/receipt}
+    username: ${ENVIRONMENT:postgres}
+    password: ${ENVIRONMENT:1234}
+  liquibase:
+    change-log: db.changelog/db.changelog-master.yaml
+  output:
+    ansi:
+      enabled: ALWAYS
+  cache:
+    type: caffeine
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  metrics:
+    tags:
+      application: ${HOSTNAME:localhost}
+
+logging:
+  level:
+    ru:
+      sogaz:
+        site:
+          pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:DEBUG}
+
+config:
+  atolURL: "https://api.atol.ru"
+  AtolLogin: "your-login"
+  AtolPass: "your-password"
+  tokenTime: "60"
+  callbackURL: "https://your-callback.url"
+  companyEmail: "noreply@yourcompany.com"
+  companyInn: "1234567890"
+  paymentAddress: "https://your-payment.url"
+  groupCode: "your-group-code"
+  periodStatusUpdate: "10"
+
+scheduled:
+  task:
+    defaultDelay: 60
