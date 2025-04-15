@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
-class PaymentReceiptCreateRequest(
+data class PaymentReceiptCreateRequest(
     @field:Valid val client: ClientInfo,
     val userId: String?,
     @field:NotEmpty val items: List<PaymentItemRequest>,

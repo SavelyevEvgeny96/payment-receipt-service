@@ -48,17 +48,17 @@ logging:
           pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:DEBUG}
 
 config:
-  atolURL: "https://api.atol.ru"
-  AtolLogin: "your-login"
-  AtolPass: "your-password"
-  tokenTime: "60"
-  callbackURL: "https://your-callback.url"
-  companyEmail: "noreply@yourcompany.com"
-  companyInn: "1234567890"
-  paymentAddress: "https://your-payment.url"
-  groupCode: "your-group-code"
-  periodStatusUpdate: "10"
+  atolURL: ${ATOL_URL:https://api.atol.ru}
+  AtolLogin: ${ATOL_LOGIN:your-login}
+  AtolPass: ${ATOL_PASS:your-password}
+  tokenTime: ${TOKEN_TIME:60}
+  callbackURL: ${CALLBACK_URL:https://your-callback.url}
+  companyEmail: ${COMPANY_EMAIL:noreply@yourcompany.com}
+  companyInn: ${COMPANY_INN:1234567890}
+  paymentAddress: ${PAYMENT_ADDRESS:https://your-payment.url}
+  groupCode: ${GROUP_CODE:your-group-code}
+  periodStatusUpdate: ${PERIOD_STATUS_UPDATE:10}
 
 scheduled:
   task:
-    defaultDelay: 60
+    defaultDelay: ${CHECK_STATUS_DELAY:60000}

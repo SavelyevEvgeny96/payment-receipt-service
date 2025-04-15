@@ -9,7 +9,7 @@ import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptCreat
 @Mapper(componentModel = "spring", uses = [PaymentMapperHelper::class])
 interface PaymentReceiptMapper {
     @Mapping(target = "paymentId", ignore = true)
-    @Mapping(source = "type", target = "paymentType", qualifiedByName = ["mapPaymentType"])
+    @Mapping(source = "request.type", target = "paymentType", qualifiedByName = ["mapPaymentType"])
     fun toPaymentReceipt(
         request: PaymentReceiptCreateRequest.PaymentPaymentRequest,
         document: PaymentDocument,

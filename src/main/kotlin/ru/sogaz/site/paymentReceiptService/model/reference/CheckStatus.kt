@@ -12,4 +12,10 @@ data class CheckStatus(
     val id: UUID,
     val stateId: String,
     val stateName: String,
-)
+) {
+    constructor() : this(
+        id = UUID.randomUUID(),
+        stateId = "",
+        stateName = "",
+    )
+}

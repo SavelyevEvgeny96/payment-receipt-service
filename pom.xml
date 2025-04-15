@@ -24,6 +24,7 @@
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
 		<ru.sogaz.esb.core.logger.version>3.0.0</ru.sogaz.esb.core.logger.version>
 		<springdoc-openapi-starter.version>2.2.0</springdoc-openapi-starter.version>
 		<maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
@@ -35,8 +36,20 @@
 		<swagger.version>2.2.16</swagger.version>
 	</properties>
 
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<dependencies>
-        <!-- Spring Boot -->
+		<!-- Spring Boot -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
@@ -56,18 +69,6 @@
 			<artifactId>kotlin-maven-plugin</artifactId>
 			<version>${kotlin.version}</version>
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>org.jetbrains.kotlin</groupId>-->
-<!--			<artifactId>kapt</artifactId>-->
-<!--			<version>211-1.4.10-release-IJ330</version>-->
-<!--		</dependency>-->
-		<!-- https://mvnrepository.com/artifact/org.jetbrains.kotlin/compiler-plugins-kapt -->
-<!--		<dependency>-->
-<!--			<groupId>org.jetbrains.kotlin</groupId>-->
-<!--			<artifactId>compiler-plugins-kapt</artifactId>-->
-<!--			<version>232-1.9.20-dev-1010-IJ9999</version>-->
-<!--			<scope>runtime</scope>-->
-<!--		</dependency>-->
 
 		<!-- Работа с БД -->
 		<dependency>
@@ -95,7 +96,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-cache</artifactId>
 		</dependency>
-
 
 		<!-- Internal Libraries -->
 		<dependency>
@@ -136,12 +136,11 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- AutoService для корректной работы аннотаций -->
+		<!-- AutoService -->
 		<dependency>
 			<groupId>com.google.auto.service</groupId>
 			<artifactId>auto-service</artifactId>
 			<version>1.1.1</version>
-			<scope>compile</scope>
 		</dependency>
 
 		<!-- Тестирование -->
@@ -157,60 +156,53 @@
 		</dependency>
 	</dependencies>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>${spring-cloud.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
-
 	<build>
 		<sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
 		<testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>
 		<finalName>${project.artifactId}</finalName>
-		<!--      Включаем обработку ресурсов -->
+
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
 				<filtering>true</filtering>
 			</resource>
 		</resources>
+
 		<plugins>
+			<!-- Плагин Spring Boot -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+
+			<!-- Kotlin + kapt -->
 			<plugin>
 				<groupId>org.jetbrains.kotlin</groupId>
 				<artifactId>kotlin-maven-plugin</artifactId>
 				<version>${kotlin.version}</version>
-<!--				<executions>-->
-<!--					<execution>-->
-<!--						<id>compile</id>-->
-<!--						<goals>-->
-<!--							<goal>compile</goal>-->
-<!--						</goals>-->
-<!--					</execution>-->
-<!--					<execution>-->
-<!--						<id>kapt</id>-->
-<!--						<goals>-->
-<!--							<goal>kapt</goal>-->
-<!--						</goals>-->
-<!--					</execution>-->
-<!--				</executions>-->
+				<executions>
+					<execution>
+						<id>compile</id>
+						<phase>process-sources</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>kapt</id>
+						<goals>
+							<goal>kapt</goal>
+						</goals>
+					</execution>
+				</executions>
 				<configuration>
 					<args>
 						<arg>-Xjsr305=strict</arg>
 					</args>
 					<compilerPlugins>
 						<plugin>spring</plugin>
-<!--						<plugin>kapt</plugin>-->
 					</compilerPlugins>
+					<!-- Подключаем mapstruct-processor тут, а не в maven-compiler-plugin -->
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.mapstruct</groupId>
@@ -232,7 +224,8 @@
 					</dependency>
 				</dependencies>
 			</plugin>
-			<!--    Плагин для публикации исходных кодов -->
+
+			<!-- maven-source-plugin -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
@@ -246,20 +239,22 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- Плагин для проверки кода тестами -->
+
+			<!-- surefire -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>${maven-surefire-plugin.version}</version>
 				<configuration>
 					<properties>
-						<argLine />
+						<argLine/>
 					</properties>
 					<forkCount>5</forkCount>
 					<reuseForks>true</reuseForks>
 				</configuration>
 			</plugin>
-			<!-- Плагин для расчёта покрытия кода тестами -->
+
+			<!-- Jacoco -->
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
@@ -280,19 +275,16 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- PMD static code analyzer-->
+
+			<!-- PMD -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-pmd-plugin</artifactId>
 				<version>3.23.0</version>
 				<configuration>
-					<!-- enable incremental analysis -->
 					<analysisCache>true</analysisCache>
-					<!-- analysisCacheLocation: optional - points to the following location by default -->
 					<analysisCacheLocation>${project.build.directory}/pmd/pmd.cache</analysisCacheLocation>
-					<!-- failOnViolation is actually true by default, but can be disabled -->
 					<failOnViolation>true</failOnViolation>
-					<!-- printFailingErrors is pretty useful -->
 					<printFailingErrors>true</printFailingErrors>
 				</configuration>
 				<executions>
@@ -303,7 +295,8 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- Ktlint static code analyzer -->
+
+			<!-- ktlint -->
 			<plugin>
 				<groupId>com.github.gantsign.maven</groupId>
 				<artifactId>ktlint-maven-plugin</artifactId>
@@ -318,6 +311,8 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<!-- maven-compiler-plugin -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -325,17 +320,11 @@
 				<configuration>
 					<source>${java.version}</source>
 					<target>${java.version}</target>
-					<annotationProcessorPaths>
-						<path>
-							<groupId>org.mapstruct</groupId>
-							<artifactId>mapstruct-processor</artifactId>
-							<version>${mapstruct.version}</version>
-						</path>
-					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
+
 	<reporting>
 		<plugins>
 			<plugin>
@@ -345,6 +334,7 @@
 			</plugin>
 		</plugins>
 	</reporting>
+
 	<repositories>
 		<repository>
 			<id>spring-snapshots</id>
@@ -363,6 +353,7 @@
 			</snapshots>
 		</repository>
 	</repositories>
+
 	<pluginRepositories>
 		<pluginRepository>
 			<id>spring-snapshots</id>

@@ -1,8 +1,11 @@
 package ru.sogaz.site.paymentReceiptService.mapper
 
+import org.mapstruct.AfterMapping
+import org.mapstruct.MappingTarget
 import org.mapstruct.Named
 import org.springframework.stereotype.Component
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
+import ru.sogaz.site.paymentReceiptService.model.entity.PaymentDocument
 import ru.sogaz.site.paymentReceiptService.model.reference.*
 import ru.sogaz.site.paymentReceiptService.repository.reference.*
 
@@ -37,5 +40,10 @@ class PaymentMapperHelper(
     fun mapPaymentType(code: String): PaymentType =
         paymentTypeRepository.findByTypeIdCode(code.toInt()) ?: throw BusinessException(-1101550422)
 
-    fun getInitialStatus(): CheckStatus = checkStatusRepository.findByStateId("new") ?: throw BusinessException(-1101550422)
+    @AfterMapping
+    fun setInitialStatus(
+        @MappingTarget document: PaymentDocument,
+    ) {
+        document.status = checkStatusRepository.findByStateId("new") ?: throw BusinessException(-1101550422)
+    }
 }

@@ -5,27 +5,25 @@ import org.springframework.stereotype.Component
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.paymentReceiptService.loggerFor
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptUpdateRequest
+import ru.sogaz.site.paymentReceiptService.properties.ConfigurationDataProperties
 import ru.sogaz.site.paymentReceiptService.repository.PaymentDocumentRepository
 import ru.sogaz.site.paymentReceiptService.repository.reference.CheckStatusRepository
-import ru.sogaz.site.paymentReceiptService.repository.reference.ConfigurationDataRepository
-import ru.sogaz.site.paymentReceiptService.service.PaymentReceiptService
+import ru.sogaz.site.paymentReceiptService.service.impl.PaymentReceiptServiceImpl
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 @Component
 class ScheduledJobService(
-    private val configurationDataRepository: ConfigurationDataRepository,
+    private val configurationDataProperties: ConfigurationDataProperties,
     private val paymentDocumentRepository: PaymentDocumentRepository,
-    private val paymentReceiptService: PaymentReceiptService,
+    private val paymentReceiptServiceImpl: PaymentReceiptServiceImpl,
     private val checkStatusRepository: CheckStatusRepository,
 ) {
     private val log = loggerFor(javaClass)
 
-    @Scheduled(fixedDelayString = "\${scheduled.task.defaultDelay:60000}")
+    @Scheduled(fixedDelayString = "\${scheduled.task.defaultDelay}")
     fun checkAtolStatuses() {
-        val period =
-            configurationDataRepository.findByParamName("periodStatusUpdate")?.paramValue?.toLongOrNull()
-                ?: return log.warn("Не удалось получить период обновления статусов из конфигурации")
+        val period = configurationDataProperties.periodStatusUpdate
 
         log.info("Запуск фоновой задачи проверки статусов Атола с периодом: $period секунд")
 
@@ -51,7 +49,7 @@ class ScheduledJobService(
         documents.forEach { document ->
             try {
                 log.info("Обновление статуса для externalId=${document.externalId}")
-                paymentReceiptService.getStatus(
+                paymentReceiptServiceImpl.getStatus(
                     PaymentReceiptUpdateRequest(
                         document.externalId ?: throw BusinessException(1212),
                     ),
