@@ -1,10 +1,13 @@
 package ru.sogaz.site.paymentReceiptService.service.impl
 
-import org.jboss.logging.MDC
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UPDATE_STATUS_ID_NOT_FOUND
+import ru.sogaz.site.filterStarter.util.TraceId
 import ru.sogaz.site.paymentReceiptService.mapper.PaymentDocumentMapper
 import ru.sogaz.site.paymentReceiptService.mapper.PaymentItemMapper
 import ru.sogaz.site.paymentReceiptService.mapper.PaymentReceiptMapper
+import ru.sogaz.site.paymentReceiptService.model.enums.DocumentStatus
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptCreateRequest
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptStatusRequest
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptUpdateRequest
@@ -18,8 +21,8 @@ import ru.sogaz.site.paymentReceiptService.repository.reference.CheckStatusRepos
 import ru.sogaz.site.paymentReceiptService.service.AtolClient
 import ru.sogaz.site.paymentReceiptService.service.PaymentReceiptService
 import ru.sogaz.siter.models.resonses.Response
+import ru.sogaz.siter.models.resonses.getSuccessResponse
 import java.time.LocalDateTime
-import java.util.UUID
 
 class PaymentReceiptServiceImpl(
     private val paymentDocumentRepository: PaymentDocumentRepository,
@@ -31,8 +34,17 @@ class PaymentReceiptServiceImpl(
     private val paymentItemMapper: PaymentItemMapper,
     private val paymentReceiptMapper: PaymentReceiptMapper,
 ) : PaymentReceiptService {
-    override fun createCheck(request: PaymentReceiptCreateRequest): Response<PaymentReceiptCreateResponse> {
-        val traceId = MDC.get("traceId")?.toString() ?: UUID.randomUUID().toString()
+    companion object {
+        const val CREATE_RECEIPT_CODE_SUCCESS = 1101550200
+        const val UPDATE_STATUS_CODE_SUCCESS = 1101560200
+        const val GET_STATUS_CODE_SUCCESS = 1101520200
+
+        const val STATUS_NOT_FOUND = "Status not found"
+        const val PAYMENT_DOCUMENT_NOT_FOUND = "Payment document not found"
+    }
+
+    override fun createReceipt(request: PaymentReceiptCreateRequest): Response<PaymentReceiptCreateResponse> {
+        val traceId = TraceId.get()
 
         val document = paymentDocumentMapper.toPaymentDocument(request)
         paymentDocumentRepository.save(document)
@@ -47,72 +59,64 @@ class PaymentReceiptServiceImpl(
 
         document.externalId = externalId
         document.dateSend = LocalDateTime.now()
-        document.status = checkStatusRepository.findByStateId("wait")
-            ?: throw BusinessException(-1101560409)
+        document.status = checkStatusRepository.findByStateId(DocumentStatus.WAIT.toString())
+            ?: throw InnerException(traceId, STATUS_NOT_FOUND)
         paymentDocumentRepository.save(document)
 
-        return Response(
-            status = "success",
-            code = 1101500200,
-            traceId = traceId,
-            data = PaymentReceiptCreateResponse("wait", externalId),
+        return getSuccessResponse(
+            traceId,
+            CREATE_RECEIPT_CODE_SUCCESS,
+            PaymentReceiptCreateResponse(DocumentStatus.WAIT.toString(), externalId),
         )
     }
 
     override fun updateStatus(request: PaymentReceiptStatusRequest): Response<PaymentReceiptStatusResponse> {
-        val traceId = MDC.get("traceId")?.toString() ?: UUID.randomUUID().toString()
+        val traceId = TraceId.get()
 
         val paymentDocument =
             paymentDocumentRepository.findByExternalId(request.externalId)
-                ?: throw BusinessException(-1101560409)
+                ?: throw BusinessException(CODE_ERROR_UPDATE_STATUS_ID_NOT_FOUND, traceId)
 
         val newStatus =
             when (request.status) {
-                "wait" -> checkStatusRepository.findByStateId("wait")
-                "done" -> checkStatusRepository.findByStateId("done")
-                "fail" -> checkStatusRepository.findByStateId("fail")
-                else -> throw BusinessException(-1101560409)
+                "wait" -> checkStatusRepository.findByStateId(DocumentStatus.WAIT.toString())
+                "done" -> checkStatusRepository.findByStateId(DocumentStatus.DONE.toString())
+                "fail" -> checkStatusRepository.findByStateId(DocumentStatus.FAIL.toString())
+                else -> throw InnerException(traceId, STATUS_NOT_FOUND)
             }
 
         paymentDocument.status = newStatus
-            ?: throw BusinessException(-1101560409)
+            ?: throw InnerException(traceId, STATUS_NOT_FOUND)
         paymentDocument.dateUpdate = LocalDateTime.now()
         paymentDocumentRepository.save(paymentDocument)
 
-        return Response(
-            status = "success",
-            code = 1101560200,
-            traceId = traceId,
-            data = PaymentReceiptStatusResponse(state = "OK"),
-        )
+        return getSuccessResponse(traceId, UPDATE_STATUS_CODE_SUCCESS, PaymentReceiptStatusResponse(state = "OK"))
     }
 
     override fun getStatus(request: PaymentReceiptUpdateRequest): Response<PaymentReceiptUpdateResponse> {
-        val traceId = MDC.get("traceId")?.toString() ?: UUID.randomUUID().toString()
+        val traceId = TraceId.get()
 
         val document =
             paymentDocumentRepository.findByExternalId(request.externalId)
-                ?: throw BusinessException(-1101560409)
+                ?: throw InnerException(traceId, PAYMENT_DOCUMENT_NOT_FOUND)
 
         val atolStatus = atolClient.getPaymentStatus(document)
 
         val newStatus =
             checkStatusRepository.findByStateId(atolStatus)
-                ?: throw BusinessException(-1101560409)
+                ?: throw InnerException(traceId, STATUS_NOT_FOUND)
 
         document.status = newStatus
         document.dateUpdate = LocalDateTime.now()
         paymentDocumentRepository.save(document)
 
-        return Response(
-            status = "success",
-            code = 1101560200,
-            traceId = traceId,
-            data =
-                PaymentReceiptUpdateResponse(
-                    stateId = atolStatus,
-                    stateName = newStatus.stateName,
-                ),
+        return getSuccessResponse(
+            traceId,
+            GET_STATUS_CODE_SUCCESS,
+            PaymentReceiptUpdateResponse(
+                stateId = atolStatus,
+                stateName = newStatus.stateName,
+            ),
         )
     }
 }

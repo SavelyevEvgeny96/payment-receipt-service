@@ -10,8 +10,8 @@ class ConfigurationDataProperties {
     private val logger = loggerFor(javaClass)
 
     lateinit var atolURL: String
-    lateinit var AtolLogin: String
-    lateinit var AtolPass: String
+    lateinit var atolLogin: String
+    lateinit var atolPass: String
     lateinit var tokenTime: String
     lateinit var callbackURL: String
     lateinit var companyEmail: String

@@ -13,11 +13,15 @@ import java.util.concurrent.TimeUnit
 class CacheConfig(
     private val configurationDataProperties: ConfigurationDataProperties,
 ) {
+    companion object {
+        private const val ATOL_TOKEN = "atolToken"
+    }
+
     @Bean
     fun cacheManager(): CaffeineCacheManager {
         val tokenTTL = configurationDataProperties.tokenTime.toLong()
 
-        val caffeineCacheManager = CaffeineCacheManager("atolToken")
+        val caffeineCacheManager = CaffeineCacheManager(ATOL_TOKEN)
         caffeineCacheManager.setCaffeine(
             Caffeine
                 .newBuilder()

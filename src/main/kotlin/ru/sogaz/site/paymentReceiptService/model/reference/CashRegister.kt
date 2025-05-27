@@ -1,6 +1,8 @@
 package ru.sogaz.site.paymentReceiptService.model.reference
 
 import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.LocalDateTime
@@ -10,7 +12,8 @@ import java.util.UUID
 @Table(name = "cash_registers")
 data class CashRegister(
     @Id
-    val systemId: UUID,
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    val systemId: UUID = UUID.randomUUID(),
     val systemCode: String,
     val systemName: String,
     val dateCreate: LocalDateTime = LocalDateTime.now(),

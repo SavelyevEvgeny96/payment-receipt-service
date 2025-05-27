@@ -9,7 +9,7 @@ import ru.sogaz.site.paymentReceiptService.model.web.response.PaymentReceiptUpda
 import ru.sogaz.siter.models.resonses.Response
 
 interface PaymentReceiptService {
-    fun createCheck(request: PaymentReceiptCreateRequest): Response<PaymentReceiptCreateResponse>
+    fun createReceipt(request: PaymentReceiptCreateRequest): Response<PaymentReceiptCreateResponse>
 
     fun updateStatus(request: PaymentReceiptStatusRequest): Response<PaymentReceiptStatusResponse>
 

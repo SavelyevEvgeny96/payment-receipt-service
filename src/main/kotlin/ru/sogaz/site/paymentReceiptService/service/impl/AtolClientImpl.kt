@@ -7,6 +7,10 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UNAUTHORIZED
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND
+import ru.sogaz.site.filterStarter.util.TraceId
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentDocument
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentItem
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentReceipt
@@ -24,26 +28,34 @@ class AtolClientImpl(
     private val cacheManager: CacheManager,
     private val configurationDataProperties: ConfigurationDataProperties,
 ) : AtolClient {
+    companion object {
+        private const val ATOL_TOKEN = "atolToken"
+        private const val TOKEN = "token"
+    }
+
     override fun getAtolToken(): String {
-        val cache = cacheManager.getCache("atolToken")
-        val cachedToken = cache?.get("token", String::class.java)
+        val cache = cacheManager.getCache(ATOL_TOKEN)
+        val cachedToken = cache?.get(TOKEN, String::class.java)
 
         if (cachedToken != null) {
             return cachedToken
         }
 
-        val login = configurationDataProperties.AtolLogin
-        val pass = configurationDataProperties.AtolPass
+        val login = configurationDataProperties.atolLogin
+        val pass = configurationDataProperties.atolPass
         val url = configurationDataProperties.atolURL
 
-        val response = restTemplate.getForEntity("$url/getToken?login=$login&pass=$pass", TokenResponse::class.java)
+        val tokenUrl: String =
+            "$url/getToken" + "?login=$login" + "&pass=$pass"
+
+        val response = restTemplate.getForEntity(tokenUrl, TokenResponse::class.java)
 
         if (!response.statusCode.is2xxSuccessful || response.body?.token == null) {
-            throw BusinessException(-1101500504)
+            throw BusinessException(CODE_ERROR_UNAUTHORIZED, TraceId.get())
         }
 
         val newToken = response.body!!.token
-        cache?.put("token", newToken)
+        cache?.put(TOKEN, newToken)
 
         return newToken.toString()
     }
@@ -103,7 +115,7 @@ class AtolClientImpl(
         val response = restTemplate.postForEntity(url, request, AtolResponse::class.java)
 
         if (!response.statusCode.is2xxSuccessful || response.body?.externalId == null) {
-            throw BusinessException(-1101500504)
+            throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND, TraceId.get())
         }
 
         return response.body!!.externalId
@@ -128,7 +140,7 @@ class AtolClientImpl(
         val response = restTemplate.exchange(url, HttpMethod.GET, entity, AtolStatusResponse::class.java)
 
         if (!response.statusCode.is2xxSuccessful || response.body?.status == null) {
-            throw BusinessException(-1101560504)
+            throw BusinessException(CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND, TraceId.get())
         }
 
         return response.body!!.status

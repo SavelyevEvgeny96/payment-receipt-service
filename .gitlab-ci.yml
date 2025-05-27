@@ -37,4 +37,4 @@ variables:
 include:
   - project: 'infrastructure/common/gitlab-ci'
     ref: master
-    file: '/java/k8s/v6/.gitlab-ci.yml'
+    file: '/java/k8s/v100_site/.gitlab-ci.yml'

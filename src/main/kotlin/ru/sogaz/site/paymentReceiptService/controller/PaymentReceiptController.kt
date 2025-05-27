@@ -23,7 +23,7 @@ class PaymentReceiptController(
     @PostMapping("/create")
     fun createPaymentCheck(
         @RequestBody request: PaymentReceiptCreateRequest,
-    ): ResponseEntity<Response<PaymentReceiptCreateResponse>> = ResponseEntity.ok(paymentReceiptService.createCheck(request))
+    ): ResponseEntity<Response<PaymentReceiptCreateResponse>> = ResponseEntity.ok(paymentReceiptService.createReceipt(request))
 
     @PostMapping("/status")
     fun updatePaymentStatus(

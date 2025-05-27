@@ -101,11 +101,16 @@
 		<dependency>
 			<groupId>ru.sogaz.site</groupId>
 			<artifactId>exception-starter</artifactId>
-			<version>1.0.22-dev</version>
+			<version>1.0.54</version>
 		</dependency>
 		<dependency>
 			<groupId>ru.sogaz.site</groupId>
 			<artifactId>models-lib</artifactId>
+			<version>1.0.3-dev</version>
+		</dependency>
+		<dependency>
+			<groupId>ru.sogaz.esb</groupId>
+			<artifactId>filter-starter</artifactId>
 			<version>1.0.1-dev</version>
 		</dependency>
 
