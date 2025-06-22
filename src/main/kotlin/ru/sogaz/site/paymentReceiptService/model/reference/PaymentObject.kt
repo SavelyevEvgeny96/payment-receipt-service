@@ -14,8 +14,8 @@ data class PaymentObject(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     val paymentObjectId: UUID = UUID.randomUUID(),
-    val paymentObjectIdCode: String,
-    val paymentObjectIdName: String,
+    val paymentObjectIdCode: String = "",
+    val paymentObjectIdName: String = "",
     val dateCreate: LocalDateTime = LocalDateTime.now(),
     val dateUpdate: LocalDateTime = LocalDateTime.now(),
 )

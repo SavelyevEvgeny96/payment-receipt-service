@@ -13,12 +13,6 @@ data class CheckStatus(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     val id: UUID = UUID.randomUUID(),
-    val stateId: String,
-    val stateName: String,
-) {
-    constructor() : this(
-        id = UUID.randomUUID(),
-        stateId = "",
-        stateName = "",
-    )
-}
+    val stateId: String = "",
+    val stateName: String = "",
+)

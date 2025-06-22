@@ -86,6 +86,12 @@
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.fasterxml.jackson.module</groupId>
+			<artifactId>jackson-module-kotlin</artifactId>
+			<version>2.15.2</version>
+		</dependency>
+
 		<!-- Работа с Кэшем -->
 		<dependency>
 			<groupId>com.github.ben-manes.caffeine</groupId>
@@ -101,12 +107,12 @@
 		<dependency>
 			<groupId>ru.sogaz.site</groupId>
 			<artifactId>exception-starter</artifactId>
-			<version>1.0.54</version>
+			<version>1.0.65</version>
 		</dependency>
 		<dependency>
 			<groupId>ru.sogaz.site</groupId>
 			<artifactId>models-lib</artifactId>
-			<version>1.0.3-dev</version>
+			<version>1.0.4</version>
 		</dependency>
 		<dependency>
 			<groupId>ru.sogaz.esb</groupId>

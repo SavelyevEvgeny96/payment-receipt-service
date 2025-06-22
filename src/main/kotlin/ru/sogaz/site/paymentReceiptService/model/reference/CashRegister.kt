@@ -14,8 +14,8 @@ data class CashRegister(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     val systemId: UUID = UUID.randomUUID(),
-    val systemCode: String,
-    val systemName: String,
+    val systemCode: String = "",
+    val systemName: String = "",
     val dateCreate: LocalDateTime = LocalDateTime.now(),
     val dateUpdate: LocalDateTime = LocalDateTime.now(),
 )

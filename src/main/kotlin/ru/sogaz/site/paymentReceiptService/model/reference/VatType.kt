@@ -14,8 +14,8 @@ data class VatType(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     val vatTypeId: UUID = UUID.randomUUID(),
-    val vatTypeCode: String,
-    val vatTypeName: String,
+    val vatTypeCode: String = "",
+    val vatTypeName: String = "",
     val dateCreate: LocalDateTime = LocalDateTime.now(),
     val dateUpdate: LocalDateTime = LocalDateTime.now(),
 )
