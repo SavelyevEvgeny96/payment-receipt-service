@@ -20,9 +20,9 @@ spring:
     active: ${ENVIRONMENT:dev}
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${ENVIRONMENT:jdbc:postgresql://localhost:5432/receipt}
-    username: ${ENVIRONMENT:postgres}
-    password: ${ENVIRONMENT:1234}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/receipt}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:1234}
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
   output:
