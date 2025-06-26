@@ -8,7 +8,7 @@ import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptUpdat
 import ru.sogaz.site.paymentReceiptService.properties.ConfigurationDataProperties
 import ru.sogaz.site.paymentReceiptService.repository.PaymentDocumentRepository
 import ru.sogaz.site.paymentReceiptService.repository.reference.CheckStatusRepository
-import ru.sogaz.site.paymentReceiptService.service.impl.PaymentReceiptServiceImpl
+import ru.sogaz.site.paymentReceiptService.service.PaymentReceiptService
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -16,7 +16,7 @@ import java.time.temporal.ChronoUnit
 class ScheduledJobService(
     private val configurationDataProperties: ConfigurationDataProperties,
     private val paymentDocumentRepository: PaymentDocumentRepository,
-    private val paymentReceiptServiceImpl: PaymentReceiptServiceImpl,
+    private val paymentReceiptService: PaymentReceiptService,
     private val checkStatusRepository: CheckStatusRepository,
 ) {
     private val log = loggerFor(javaClass)
@@ -49,7 +49,7 @@ class ScheduledJobService(
         documents.forEach { document ->
             try {
                 log.info("Обновление статуса для externalId=${document.externalId}")
-                paymentReceiptServiceImpl.getStatus(
+                paymentReceiptService.getStatus(
                     PaymentReceiptUpdateRequest(
                         document.externalId ?: throw BusinessException(1212),
                     ),
