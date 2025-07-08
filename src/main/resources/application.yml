@@ -11,6 +11,7 @@ app:
 server:
   port: ${SERVER_PORT:8080}
   use-forward-headers: true
+  forward-headers-strategy: framework
   main.allow-bean-definition-overriding: true
 
 spring:
@@ -60,15 +61,15 @@ logging:
           pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:DEBUG}
 
 config:
-  atolURL: ${ATOL_URL:https://api.atol.ru}
-  AtolLogin: ${ATOL_LOGIN:your-login}
-  AtolPass: ${ATOL_PASS:your-password}
-  tokenTime: ${TOKEN_TIME:60}
-  callbackURL: ${CALLBACK_URL:https://your-callback.url}
-  companyEmail: ${COMPANY_EMAIL:noreply@yourcompany.com}
-  companyInn: ${COMPANY_INN:1234567890}
+  atolURL: ${ATOL_URL:https://testonline.atol.ru/possystem/v4/}
+  AtolLogin: ${ATOL_LOGIN:v4-online-atol-ru }
+  AtolPass: ${ATOL_PASS:iGFFuihss}
+  tokenTime: ${TOKEN_TIME:720}
+  callbackURL: ${CALLBACK_URL:http://localhost:8080/paymentCheck/status}
+  companyEmail: ${COMPANY_EMAIL:Diop.Sheykh@sogaz.ru}
+  companyInn: ${COMPANY_INN:5544332219}
   paymentAddress: ${PAYMENT_ADDRESS:https://your-payment.url}
-  groupCode: ${GROUP_CODE:your-group-code}
+  groupCode: ${GROUP_CODE:v4-online-atol-ru_4179}
   periodStatusUpdate: ${PERIOD_STATUS_UPDATE:10}
 
 scheduled:
