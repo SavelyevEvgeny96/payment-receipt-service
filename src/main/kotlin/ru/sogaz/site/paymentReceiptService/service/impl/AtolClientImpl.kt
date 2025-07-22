@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentReceiptService.service.impl
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.cache.CacheManager
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -28,6 +29,7 @@ import java.time.format.DateTimeFormatter
 class AtolClientImpl(
     private val restTemplate: RestTemplate,
     private val cacheManager: CacheManager,
+    private val objectsMapper: ObjectMapper,
     private val configurationDataProperties: ConfigurationDataProperties,
 ) : AtolClient {
     private val log = loggerFor(javaClass)
@@ -148,6 +150,9 @@ class AtolClientImpl(
                         ),
                     timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")),
                 )
+
+            val requestJson = objectsMapper.writeValueAsString(request)
+            log.warn("Request JSON to Atol: $requestJson")
 
             val response = restTemplate.postForEntity(url, request, AtolResponse::class.java)
 

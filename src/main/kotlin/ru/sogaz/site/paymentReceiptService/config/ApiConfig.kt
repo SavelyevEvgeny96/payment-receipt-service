@@ -70,6 +70,7 @@ class ApiConfig(
         AtolClientImpl(
             restTemplate(),
             cacheManager,
+            objectsMapper(),
             configurationDataProperties,
         )
 
