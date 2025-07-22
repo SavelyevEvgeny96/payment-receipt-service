@@ -155,31 +155,22 @@ class AtolClientImpl(
             val requestJson = objectsMapper.writeValueAsString(request)
             log.warn("Request JSON to Atol: $requestJson")
 
-//            val headers =
-//                HttpHeaders().apply {
-//                    contentType = MediaType.APPLICATION_JSON
-//                }
-//            val entity = HttpEntity(request, headers)
-//
-//            val rawResponse = restTemplate.exchange(url, HttpMethod.POST, entity, String::class.java)
-//            log.warn("Raw Atol response: ${rawResponse.body}")
+            val headers =
+                HttpHeaders().apply {
+                    contentType = MediaType.APPLICATION_JSON
+                }
+            val entity = HttpEntity(request, headers)
 
-            val responseEntity = restTemplate.postForEntity(url, request, AtolResponse::class.java)
+            val rawResponse = restTemplate.exchange(url, HttpMethod.POST, entity, String::class.java)
+            log.warn("Response JSON from Atol: ${rawResponse.body}")
 
-            if (!responseEntity.statusCode.is2xxSuccessful || responseEntity.body?.uuid == null) {
+            val responseObject = objectsMapper.readValue(rawResponse.body!!, AtolResponse::class.java)
+
+            if (responseObject.uuid.isEmpty()) {
                 throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND, TraceId.get())
             }
 
-            val response =
-                responseEntity.body?.run {
-                    if (error == null) {
-                        uuid
-                    } else {
-                        "Receipt creation error code: ${error.code}; Error: ${error.text}"
-                    }
-                } ?: "Empty response from ATOL"
-
-            return response
+            return responseObject.uuid
         } catch (e: BusinessException) {
             log.warn(e.message)
             throw e
