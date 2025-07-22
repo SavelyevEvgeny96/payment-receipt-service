@@ -62,7 +62,7 @@ class PaymentReceiptServiceImplTest {
         `when`(request.items).thenReturn(emptyList())
         `when`(request.payments).thenReturn(emptyList())
         `when`(atolClient.sendAtolRequest(document, emptyList(), emptyList())).thenReturn("ext-123")
-        `when`(checkStatusRepository.findByStateId("WAIT")).thenReturn(status)
+        `when`(checkStatusRepository.findByStateId("wait")).thenReturn(status)
 
         val response = service.createReceipt(request)
 
@@ -106,7 +106,7 @@ class PaymentReceiptServiceImplTest {
         val status = mock(CheckStatus::class.java)
 
         `when`(paymentDocumentRepository.findByExternalId("ext-123")).thenReturn(document)
-        `when`(checkStatusRepository.findByStateId("DONE")).thenReturn(status)
+        `when`(checkStatusRepository.findByStateId("done")).thenReturn(status)
 
         val response = service.updateStatus(request)
 

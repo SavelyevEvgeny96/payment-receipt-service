@@ -16,26 +16,26 @@ import java.util.UUID
 
 @Entity
 @Table(name = "payment_documents")
-data class PaymentDocument(
+class PaymentDocument(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    val docId: UUID = UUID.randomUUID(),
-    val clientUserId: String?,
-    val clientEmail: String,
-    val clientPhone: String?,
-    val clientName: String?,
-    val total: Double,
-    var externalId: String?,
+    var docId: UUID? = null,
+    var clientUserId: String? = null,
+    var clientEmail: String = "",
+    var clientPhone: String? = null,
+    var clientName: String? = null,
+    var total: Double = 0.0,
+    var externalId: String? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "system_id")
-    val cashRegister: CashRegister,
+    var cashRegister: CashRegister? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "version_id")
-    val apiVersion: ApiVersion,
+    var apiVersion: ApiVersion? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "state_id")
-    var status: CheckStatus,
-    var dateSend: LocalDateTime?,
-    val dateCreate: LocalDateTime = LocalDateTime.now(),
+    var status: CheckStatus? = null,
+    var dateSend: LocalDateTime? = null,
+    var dateCreate: LocalDateTime = LocalDateTime.now(),
     var dateUpdate: LocalDateTime = LocalDateTime.now(),
 )

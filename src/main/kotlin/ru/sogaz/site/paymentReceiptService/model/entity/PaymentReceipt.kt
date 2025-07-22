@@ -17,14 +17,14 @@ import java.util.UUID
 data class PaymentReceipt(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    val paymentId: UUID = UUID.randomUUID(),
+    var paymentId: UUID = UUID.randomUUID(),
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "type_id")
-    val paymentType: PaymentType,
-    val sum: Double,
+    var paymentType: PaymentType? = null,
+    var sum: Double = 0.0,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doc_id")
-    val document: PaymentDocument,
-    val dateCreate: LocalDateTime = LocalDateTime.now(),
-    val dateUpdate: LocalDateTime = LocalDateTime.now(),
+    var document: PaymentDocument? = null,
+    var dateCreate: LocalDateTime = LocalDateTime.now(),
+    var dateUpdate: LocalDateTime = LocalDateTime.now(),
 )

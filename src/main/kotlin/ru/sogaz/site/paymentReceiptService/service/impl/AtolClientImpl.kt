@@ -7,6 +7,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UNAUTHORIZED
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND
@@ -31,6 +32,10 @@ class AtolClientImpl(
     companion object {
         private const val ATOL_TOKEN = "atolToken"
         private const val TOKEN = "token"
+        private const val PAYMENT_METHOD = "Payment Method not found in items"
+        private const val PAYMENT_OBJECT = "Payment Object not found in items"
+        private const val VAT_TYPE = "Vat Type not found in items"
+        private const val PAYMENT_TYPE = "Payment Type not found in payments"
     }
 
     override fun getAtolToken(): String {
@@ -45,19 +50,34 @@ class AtolClientImpl(
         val pass = configurationDataProperties.atolPass
         val url = configurationDataProperties.atolURL
 
-        val tokenUrl: String =
-            "$url/getToken" + "?login=$login" + "&pass=$pass"
+        val requestBody =
+            mapOf(
+                "login" to login,
+                "pass" to pass,
+            )
 
-        val response = restTemplate.getForEntity(tokenUrl, TokenResponse::class.java)
+        val headers =
+            HttpHeaders().apply {
+                contentType = MediaType.APPLICATION_JSON
+            }
+
+        val entity = HttpEntity(requestBody, headers)
+
+        val response =
+            restTemplate.postForEntity(
+                "$url/getToken",
+                entity,
+                TokenResponse::class.java,
+            )
 
         if (!response.statusCode.is2xxSuccessful || response.body?.token == null) {
             throw BusinessException(CODE_ERROR_UNAUTHORIZED, TraceId.get())
         }
 
-        val newToken = response.body!!.token
+        val newToken = response.body?.token ?: throw BusinessException(CODE_ERROR_UNAUTHORIZED, TraceId.get())
         cache?.put(TOKEN, newToken)
 
-        return newToken.toString()
+        return newToken
     }
 
     override fun sendAtolRequest(
@@ -95,16 +115,25 @@ class AtolClientImpl(
                                     price = item.price,
                                     quantity = item.quantity,
                                     sum = item.sum,
-                                    paymentMethod = item.paymentMethod.paymentMethodCode,
-                                    paymentObject = item.paymentObject.paymentObjectIdCode,
-                                    vat = AtolRequest.AtolVatData(type = item.vatType.vatTypeCode),
+                                    paymentMethod =
+                                        item.paymentMethod?.paymentMethodCode
+                                            ?: throw InnerException(TraceId.get(), PAYMENT_METHOD),
+                                    paymentObject =
+                                        item.paymentObject?.paymentObjectIdCode
+                                            ?: throw InnerException(TraceId.get(), PAYMENT_OBJECT),
+                                    vat =
+                                        AtolRequest.AtolVatData(
+                                            type =
+                                                item.vatType?.vatTypeCode
+                                                    ?: throw InnerException(TraceId.get(), VAT_TYPE),
+                                        ),
                                 )
                             },
                         payments =
                             payments.map { payment ->
                                 AtolRequest.AtolPaymentData(
                                     sum = payment.sum,
-                                    type = payment.paymentType.typeIdCode,
+                                    type = payment.paymentType?.typeIdCode ?: throw InnerException(TraceId.get(), PAYMENT_TYPE),
                                 )
                             },
                         total = document.total,
@@ -124,7 +153,7 @@ class AtolClientImpl(
     override fun getPaymentStatus(document: PaymentDocument): String {
         val token = getAtolToken()
 
-        val apiVersion = document.apiVersion.versionCode
+        val apiVersion = document.apiVersion?.versionCode
         val groupCode = configurationDataProperties.groupCode
 
         val url = "${configurationDataProperties.atolURL}/$apiVersion/$groupCode/report/${document.externalId}"

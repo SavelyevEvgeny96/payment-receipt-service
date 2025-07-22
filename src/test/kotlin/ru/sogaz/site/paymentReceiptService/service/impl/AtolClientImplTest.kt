@@ -35,6 +35,7 @@ import ru.sogaz.site.paymentReceiptService.model.reference.VatType
 import ru.sogaz.site.paymentReceiptService.model.web.request.AtolRequest
 import ru.sogaz.site.paymentReceiptService.model.web.response.AtolResponse
 import ru.sogaz.site.paymentReceiptService.model.web.response.AtolStatusResponse
+import ru.sogaz.site.paymentReceiptService.model.web.response.ErrorInfo
 import ru.sogaz.site.paymentReceiptService.model.web.response.TokenResponse
 import ru.sogaz.site.paymentReceiptService.properties.ConfigurationDataProperties
 import java.util.UUID
@@ -75,9 +76,24 @@ class AtolClientImplTest {
         `when`(config.atolPass).thenReturn("pass")
         `when`(config.atolURL).thenReturn("http://atol")
 
-        val response = ResponseEntity.ok(TokenResponse("empty", "new-token", "20-10-2025"))
-        `when`(restTemplate.getForEntity("http://atol/getToken?login=user&pass=pass", TokenResponse::class.java))
-            .thenReturn(response)
+        val requestBody =
+            mapOf(
+                "login" to config.atolLogin,
+                "pass" to config.atolPass,
+            )
+
+        val header =
+            HttpHeaders().apply {
+                contentType = MediaType.APPLICATION_JSON
+            }
+
+        val entityToken = HttpEntity(requestBody, header)
+
+        val response =
+            ResponseEntity.ok(TokenResponse("new-token", ErrorInfo("1", 1, "some_error", "error"), "20-10-2025"))
+        `when`(
+            restTemplate.postForEntity("http://atol/getToken", entityToken, TokenResponse::class.java),
+        ).thenReturn(response)
 
         val token = atolClient.getAtolToken()
 
@@ -94,8 +110,21 @@ class AtolClientImplTest {
         `when`(config.atolPass).thenReturn("pass")
         `when`(config.atolURL).thenReturn("http://atol")
 
+        val requestBody =
+            mapOf(
+                "login" to config.atolLogin,
+                "pass" to config.atolPass,
+            )
+
+        val header =
+            HttpHeaders().apply {
+                contentType = MediaType.APPLICATION_JSON
+            }
+
+        val entityToken = HttpEntity(requestBody, header)
+
         val badResponse = ResponseEntity<TokenResponse>(null, HttpStatus.BAD_REQUEST)
-        `when`(restTemplate.getForEntity("http://atol/getToken?login=login&pass=pass", TokenResponse::class.java))
+        `when`(restTemplate.postForEntity("http://atol/getToken", entityToken, TokenResponse::class.java))
             .thenReturn(badResponse)
 
         assertThrows(BusinessException::class.java) {
@@ -146,8 +175,22 @@ class AtolClientImplTest {
         `when`(cache.get("token", String::class.java)).thenReturn(null)
         `when`(config.atolLogin).thenReturn("login")
         `when`(config.atolPass).thenReturn("pass")
-        `when`(restTemplate.getForEntity("http://atol/getToken?login=login&pass=pass", TokenResponse::class.java))
-            .thenReturn(ResponseEntity.ok(TokenResponse("", "token123", "")))
+
+        val requestBody =
+            mapOf(
+                "login" to config.atolLogin,
+                "pass" to config.atolPass,
+            )
+
+        val header =
+            HttpHeaders().apply {
+                contentType = MediaType.APPLICATION_JSON
+            }
+
+        val entityToken = HttpEntity(requestBody, header)
+
+        `when`(restTemplate.postForEntity("http://atol/getToken", entityToken, TokenResponse::class.java))
+            .thenReturn(ResponseEntity.ok(TokenResponse("token123", ErrorInfo("1", 1, "some_error", "error"), "")))
 
         val atolResponse = AtolResponse("external-123", "wait")
         `when`(restTemplate.postForEntity(anyString(), any(), eq(AtolResponse::class.java)))
@@ -187,8 +230,22 @@ class AtolClientImplTest {
         `when`(cache.get("token", String::class.java)).thenReturn(null)
         `when`(config.atolLogin).thenReturn("login")
         `when`(config.atolPass).thenReturn("pass")
-        `when`(restTemplate.getForEntity("http://atol/getToken?login=login&pass=pass", TokenResponse::class.java))
-            .thenReturn(ResponseEntity.ok(TokenResponse("", "token123", "")))
+
+        val requestBody =
+            mapOf(
+                "login" to config.atolLogin,
+                "pass" to config.atolPass,
+            )
+
+        val header =
+            HttpHeaders().apply {
+                contentType = MediaType.APPLICATION_JSON
+            }
+
+        val entityToken = HttpEntity(requestBody, header)
+
+        `when`(restTemplate.postForEntity("http://atol/getToken", entityToken, TokenResponse::class.java))
+            .thenReturn(ResponseEntity.ok(TokenResponse("token123", ErrorInfo("1", 1, "some_error", "error"), "")))
 
         val headers = HttpHeaders()
         headers.set("Token", "token123")
