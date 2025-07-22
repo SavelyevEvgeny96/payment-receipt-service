@@ -158,14 +158,14 @@ class AtolClientImpl(
             val requestJson = objectsMapper.writeValueAsString(request)
             log.warn("Request JSON to Atol: $requestJson")
 
-            val headers =
-                HttpHeaders().apply {
-                    contentType = MediaType.APPLICATION_JSON
-                }
+//            val headers =
+//                HttpHeaders().apply {
+//                    contentType = MediaType.APPLICATION_JSON
+//                }
 
-            val entity = HttpEntity(request, headers)
+//            val entity = HttpEntity(request, headers)
 
-            val response = restTemplate.postForEntity(url, entity, AtolResponse::class.java)
+            val response = restTemplate.postForEntity(url, request, AtolResponse::class.java)
 
             if (!response.statusCode.is2xxSuccessful || response.body?.externalId == null) {
                 throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND, TraceId.get())
