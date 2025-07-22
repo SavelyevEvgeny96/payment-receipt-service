@@ -47,10 +47,6 @@ class AtolClientImpl(
         val cache = cacheManager.getCache(ATOL_TOKEN)
         val cachedToken = cache?.get(TOKEN, String::class.java)
 
-        restTemplate.messageConverters.forEach {
-            println("RestTemplate converter: ${it.javaClass.name}")
-        }
-
         if (cachedToken != null) {
             return cachedToken
         }
@@ -96,74 +92,68 @@ class AtolClientImpl(
     ): String {
         try {
             val token = getAtolToken()
-            val url = "${configurationDataProperties.atolURL}/sell?token=$token"
+            val url =
+                "${configurationDataProperties.atolURL}/${configurationDataProperties.groupCode}/sell?token=$token"
 
             val request =
                 AtolRequest(
                     externalId = document.docId.toString(),
                     service =
-                        AtolRequest.AtolServiceData(
-                            callbackUrl = configurationDataProperties.callbackURL,
-                        ),
+                    AtolRequest.AtolServiceData(
+                        callbackUrl = configurationDataProperties.callbackURL,
+                    ),
                     receipt =
-                        AtolRequest.AtolReceiptData(
-                            client =
-                                AtolRequest.AtolClientData(
-                                    email = document.clientEmail,
-                                    phone = document.clientPhone,
-                                ),
-                            company =
-                                AtolRequest.AtolCompanyData(
-                                    email = configurationDataProperties.companyEmail,
-                                    inn = configurationDataProperties.companyInn,
-                                    paymentAddress = configurationDataProperties.paymentAddress,
-                                ),
-                            items =
-                                items.map { item ->
-                                    AtolRequest.AtolItemData(
-                                        name = item.name,
-                                        price = item.price,
-                                        quantity = item.quantity,
-                                        sum = item.sum,
-                                        paymentMethod =
-                                            item.paymentMethod?.paymentMethodCode
-                                                ?: throw InnerException(TraceId.get(), PAYMENT_METHOD),
-                                        paymentObject =
-                                            item.paymentObject?.paymentObjectIdCode
-                                                ?: throw InnerException(TraceId.get(), PAYMENT_OBJECT),
-                                        vat =
-                                            AtolRequest.AtolVatData(
-                                                type =
-                                                    item.vatType?.vatTypeCode
-                                                        ?: throw InnerException(TraceId.get(), VAT_TYPE),
-                                            ),
-                                    )
-                                },
-                            payments =
-                                payments.map { payment ->
-                                    AtolRequest.AtolPaymentData(
-                                        sum = payment.sum,
-                                        type =
-                                            payment.paymentType?.typeIdCode ?: throw InnerException(
-                                                TraceId.get(),
-                                                PAYMENT_TYPE,
-                                            ),
-                                    )
-                                },
-                            total = document.total,
+                    AtolRequest.AtolReceiptData(
+                        client =
+                        AtolRequest.AtolClientData(
+                            email = document.clientEmail,
+                            phone = document.clientPhone,
                         ),
+                        company =
+                        AtolRequest.AtolCompanyData(
+                            email = configurationDataProperties.companyEmail,
+                            inn = configurationDataProperties.companyInn,
+                            paymentAddress = configurationDataProperties.paymentAddress,
+                        ),
+                        items =
+                        items.map { item ->
+                            AtolRequest.AtolItemData(
+                                name = item.name,
+                                price = item.price,
+                                quantity = item.quantity,
+                                sum = item.sum,
+                                paymentMethod =
+                                item.paymentMethod?.paymentMethodCode
+                                    ?: throw InnerException(TraceId.get(), PAYMENT_METHOD),
+                                paymentObject =
+                                item.paymentObject?.paymentObjectIdCode
+                                    ?: throw InnerException(TraceId.get(), PAYMENT_OBJECT),
+                                vat =
+                                AtolRequest.AtolVatData(
+                                    type =
+                                    item.vatType?.vatTypeCode
+                                        ?: throw InnerException(TraceId.get(), VAT_TYPE),
+                                ),
+                            )
+                        },
+                        payments =
+                        payments.map { payment ->
+                            AtolRequest.AtolPaymentData(
+                                sum = payment.sum,
+                                type =
+                                payment.paymentType?.typeIdCode ?: throw InnerException(
+                                    TraceId.get(),
+                                    PAYMENT_TYPE,
+                                ),
+                            )
+                        },
+                        total = document.total,
+                    ),
                     timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")),
                 )
 
             val requestJson = objectsMapper.writeValueAsString(request)
             log.warn("Request JSON to Atol: $requestJson")
-
-//            val headers =
-//                HttpHeaders().apply {
-//                    contentType = MediaType.APPLICATION_JSON
-//                }
-
-//            val entity = HttpEntity(request, headers)
 
             val response = restTemplate.postForEntity(url, request, AtolResponse::class.java)
 
