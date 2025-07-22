@@ -12,6 +12,7 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UNAUTHORIZED
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND
 import ru.sogaz.site.filterStarter.util.TraceId
+import ru.sogaz.site.paymentReceiptService.loggerFor
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentDocument
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentItem
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentReceipt
@@ -29,6 +30,8 @@ class AtolClientImpl(
     private val cacheManager: CacheManager,
     private val configurationDataProperties: ConfigurationDataProperties,
 ) : AtolClient {
+    private val log = loggerFor(javaClass)
+
     companion object {
         private const val ATOL_TOKEN = "atolToken"
         private const val TOKEN = "token"
@@ -85,69 +88,81 @@ class AtolClientImpl(
         items: List<PaymentItem>,
         payments: List<PaymentReceipt>,
     ): String {
-        val token = getAtolToken()
-        val url = "${configurationDataProperties.atolURL}/sell?token=$token"
+        try {
+            val token = getAtolToken()
+            val url = "${configurationDataProperties.atolURL}/sell?token=$token"
 
-        val request =
-            AtolRequest(
-                externalId = document.docId.toString(),
-                service =
-                    AtolRequest.AtolServiceData(
-                        callbackUrl = configurationDataProperties.callbackURL,
-                    ),
-                receipt =
-                    AtolRequest.AtolReceiptData(
-                        client =
-                            AtolRequest.AtolClientData(
-                                email = document.clientEmail,
-                                phone = document.clientPhone,
-                            ),
-                        company =
-                            AtolRequest.AtolCompanyData(
-                                email = configurationDataProperties.companyEmail,
-                                inn = configurationDataProperties.companyInn,
-                                paymentAddress = configurationDataProperties.paymentAddress,
-                            ),
-                        items =
-                            items.map { item ->
-                                AtolRequest.AtolItemData(
-                                    name = item.name,
-                                    price = item.price,
-                                    quantity = item.quantity,
-                                    sum = item.sum,
-                                    paymentMethod =
-                                        item.paymentMethod?.paymentMethodCode
-                                            ?: throw InnerException(TraceId.get(), PAYMENT_METHOD),
-                                    paymentObject =
-                                        item.paymentObject?.paymentObjectIdCode
-                                            ?: throw InnerException(TraceId.get(), PAYMENT_OBJECT),
-                                    vat =
-                                        AtolRequest.AtolVatData(
-                                            type =
-                                                item.vatType?.vatTypeCode
-                                                    ?: throw InnerException(TraceId.get(), VAT_TYPE),
-                                        ),
-                                )
-                            },
-                        payments =
-                            payments.map { payment ->
-                                AtolRequest.AtolPaymentData(
-                                    sum = payment.sum,
-                                    type = payment.paymentType?.typeIdCode ?: throw InnerException(TraceId.get(), PAYMENT_TYPE),
-                                )
-                            },
-                        total = document.total,
-                    ),
-                timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")),
-            )
+            val request =
+                AtolRequest(
+                    externalId = document.docId.toString(),
+                    service =
+                        AtolRequest.AtolServiceData(
+                            callbackUrl = configurationDataProperties.callbackURL,
+                        ),
+                    receipt =
+                        AtolRequest.AtolReceiptData(
+                            client =
+                                AtolRequest.AtolClientData(
+                                    email = document.clientEmail,
+                                    phone = document.clientPhone,
+                                ),
+                            company =
+                                AtolRequest.AtolCompanyData(
+                                    email = configurationDataProperties.companyEmail,
+                                    inn = configurationDataProperties.companyInn,
+                                    paymentAddress = configurationDataProperties.paymentAddress,
+                                ),
+                            items =
+                                items.map { item ->
+                                    AtolRequest.AtolItemData(
+                                        name = item.name,
+                                        price = item.price,
+                                        quantity = item.quantity,
+                                        sum = item.sum,
+                                        paymentMethod =
+                                            item.paymentMethod?.paymentMethodCode
+                                                ?: throw InnerException(TraceId.get(), PAYMENT_METHOD),
+                                        paymentObject =
+                                            item.paymentObject?.paymentObjectIdCode
+                                                ?: throw InnerException(TraceId.get(), PAYMENT_OBJECT),
+                                        vat =
+                                            AtolRequest.AtolVatData(
+                                                type =
+                                                    item.vatType?.vatTypeCode
+                                                        ?: throw InnerException(TraceId.get(), VAT_TYPE),
+                                            ),
+                                    )
+                                },
+                            payments =
+                                payments.map { payment ->
+                                    AtolRequest.AtolPaymentData(
+                                        sum = payment.sum,
+                                        type =
+                                            payment.paymentType?.typeIdCode ?: throw InnerException(
+                                                TraceId.get(),
+                                                PAYMENT_TYPE,
+                                            ),
+                                    )
+                                },
+                            total = document.total,
+                        ),
+                    timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")),
+                )
 
-        val response = restTemplate.postForEntity(url, request, AtolResponse::class.java)
+            val response = restTemplate.postForEntity(url, request, AtolResponse::class.java)
 
-        if (!response.statusCode.is2xxSuccessful || response.body?.externalId == null) {
-            throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND, TraceId.get())
+            if (!response.statusCode.is2xxSuccessful || response.body?.externalId == null) {
+                throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND, TraceId.get())
+            }
+
+            return response.body!!.externalId
+        } catch (e: BusinessException) {
+            log.warn(e.message)
+            throw e
+        } catch (e: Exception) {
+            log.warn(e.message)
+            throw InnerException(TraceId.get(), e.message)
         }
-
-        return response.body!!.externalId
     }
 
     override fun getPaymentStatus(document: PaymentDocument): String {
