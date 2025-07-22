@@ -8,6 +8,8 @@ import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
+import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.paymentReceiptService.mapper.PaymentDocumentMapper
 import ru.sogaz.site.paymentReceiptService.mapper.PaymentItemMapper
@@ -63,7 +65,15 @@ class ApiConfig(
             .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
 
     @Bean
-    fun restTemplate(): RestTemplate = RestTemplate()
+    fun restTemplate(): RestTemplate {
+        val restTemplate = RestTemplate()
+
+        restTemplate.messageConverters.removeIf { it is MappingJackson2XmlHttpMessageConverter }
+
+        restTemplate.messageConverters.add(MappingJackson2HttpMessageConverter())
+
+        return restTemplate
+    }
 
     @Bean
     fun atolClient(): AtolClient =

@@ -47,6 +47,10 @@ class AtolClientImpl(
         val cache = cacheManager.getCache(ATOL_TOKEN)
         val cachedToken = cache?.get(TOKEN, String::class.java)
 
+        restTemplate.messageConverters.forEach {
+            println("RestTemplate converter: ${it.javaClass.name}")
+        }
+
         if (cachedToken != null) {
             return cachedToken
         }
