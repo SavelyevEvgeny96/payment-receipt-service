@@ -11,7 +11,6 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UNAUTHORIZED
-import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND
 import ru.sogaz.site.filterStarter.util.TraceId
 import ru.sogaz.site.paymentReceiptService.loggerFor
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentDocument
@@ -181,27 +180,38 @@ class AtolClientImpl(
     }
 
     override fun getPaymentStatus(document: PaymentDocument): String {
-        val token = getAtolToken()
+        try {
+            val token = getAtolToken()
 
-        val apiVersion = document.apiVersion?.versionCode
-        val groupCode = configurationDataProperties.groupCode
+//        val apiVersion = document.apiVersion?.versionCode
+            val groupCode = configurationDataProperties.groupCode
 
-        val url = "${configurationDataProperties.atolURL}/$apiVersion/$groupCode/report/${document.externalId}"
+            val url = "${configurationDataProperties.atolURL}/$groupCode/report/${document.externalId}"
 
-        val headers =
-            HttpHeaders().apply {
-                set("Token", token) // Передаём токен
-                contentType = MediaType.APPLICATION_JSON
-            }
+            val headers =
+                HttpHeaders().apply {
+                    set("Token", token)
+                    contentType = MediaType.APPLICATION_JSON
+                }
 
-        val entity = HttpEntity<Unit>(headers)
+            val entity = HttpEntity<Unit>(headers)
 
-        val response = restTemplate.exchange(url, HttpMethod.GET, entity, AtolStatusResponse::class.java)
+            val response = restTemplate.exchange(url, HttpMethod.GET, entity, String::class.java)
+            log.warn("Response JSON from Atol: ${response.body}")
 
-        if (!response.statusCode.is2xxSuccessful || response.body?.status == null) {
-            throw BusinessException(CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND, TraceId.get())
+            val responseObject = objectsMapper.readValue(response.body, AtolStatusResponse::class.java)
+
+//        if (!response.statusCode.is2xxSuccessful || response.body?.status == null) {
+//            throw BusinessException(CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND, TraceId.get())
+//        }
+
+            return responseObject.status
+        } catch (e: BusinessException) {
+            log.warn(e.message)
+            throw e
+        } catch (e: Exception) {
+            log.warn(e.message)
+            throw InnerException(TraceId.get(), e.message)
         }
-
-        return response.body!!.status
     }
 }
