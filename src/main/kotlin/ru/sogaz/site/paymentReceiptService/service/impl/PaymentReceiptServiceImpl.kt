@@ -41,6 +41,7 @@ class PaymentReceiptServiceImpl(
 
         const val STATUS_NOT_FOUND = "Status not found"
         const val PAYMENT_DOCUMENT_NOT_FOUND = "Payment document not found"
+        private const val API_VERSION = "Api Version not found"
     }
 
     override fun createReceipt(request: PaymentReceiptCreateRequest): Response<PaymentReceiptCreateResponse> {
@@ -55,7 +56,9 @@ class PaymentReceiptServiceImpl(
         val payments = request.payments.map { paymentReceiptMapper.toPaymentReceipt(it, document) }
         paymentReceiptRepository.saveAll(payments)
 
-        val externalId = atolClient.sendAtolRequest(document, items, payments)
+        val apiVersion = document.apiVersion?.versionCode ?: throw InnerException(TraceId.get(), API_VERSION)
+
+        val externalId = atolClient.sendAtolRequest(document, items, payments, apiVersion)
 
         document.externalId = externalId
         document.dateSend = LocalDateTime.now()
@@ -96,11 +99,13 @@ class PaymentReceiptServiceImpl(
     override fun getStatus(request: PaymentReceiptUpdateRequest): Response<PaymentReceiptUpdateResponse> {
         val traceId = TraceId.get()
 
+        val externalId = request.externalId
         val document =
-            paymentDocumentRepository.findByExternalId(request.externalId)
+            paymentDocumentRepository.findByExternalId(externalId)
                 ?: throw InnerException(traceId, PAYMENT_DOCUMENT_NOT_FOUND)
+        val apiVersion = document.apiVersion?.versionCode ?: throw InnerException(TraceId.get(), API_VERSION)
 
-        val atolStatus = atolClient.getPaymentStatus(document)
+        val atolStatus = atolClient.getPaymentStatus(externalId, apiVersion)
 
         val newStatus =
             checkStatusRepository.findByStateId(atolStatus)

@@ -1,6 +1,5 @@
 package ru.sogaz.site.paymentReceiptService.service.impl
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.cache.CacheManager
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -11,6 +10,7 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UNAUTHORIZED
+import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND
 import ru.sogaz.site.filterStarter.util.TraceId
 import ru.sogaz.site.paymentReceiptService.loggerFor
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentDocument
@@ -28,7 +28,6 @@ import java.time.format.DateTimeFormatter
 class AtolClientImpl(
     private val restTemplate: RestTemplate,
     private val cacheManager: CacheManager,
-    private val objectsMapper: ObjectMapper,
     private val configurationDataProperties: ConfigurationDataProperties,
 ) : AtolClient {
     private val log = loggerFor(javaClass)
@@ -36,63 +35,72 @@ class AtolClientImpl(
     companion object {
         private const val ATOL_TOKEN = "atolToken"
         private const val TOKEN = "token"
+        private const val GET_TOKEN = "getToken"
+        private const val SELL_TOKEN = "sell?token="
+        private const val REPORT = "report"
+
         private const val PAYMENT_METHOD = "Payment Method not found in items"
         private const val PAYMENT_OBJECT = "Payment Object not found in items"
         private const val VAT_TYPE = "Vat Type not found in items"
         private const val PAYMENT_TYPE = "Payment Type not found in payments"
     }
 
-    override fun getAtolToken(): String {
-        val cache = cacheManager.getCache(ATOL_TOKEN)
-        val cachedToken = cache?.get(TOKEN, String::class.java)
+    override fun getAtolToken(apiVersion: String): String {
+        try {
+            val cache = cacheManager.getCache(ATOL_TOKEN)
+            val cachedToken = cache?.get(TOKEN, String::class.java)
 
-        if (cachedToken != null) {
-            return cachedToken
-        }
-
-        val login = configurationDataProperties.atolLogin
-        val pass = configurationDataProperties.atolPass
-        val url = configurationDataProperties.atolURL
-
-        val requestBody =
-            mapOf(
-                "login" to login,
-                "pass" to pass,
-            )
-
-        val headers =
-            HttpHeaders().apply {
-                contentType = MediaType.APPLICATION_JSON
+            if (cachedToken != null) {
+                return cachedToken
             }
 
-        val entity = HttpEntity(requestBody, headers)
+            val login = configurationDataProperties.atolLogin
+            val pass = configurationDataProperties.atolPass
+            val url = configurationDataProperties.atolURL
 
-        val response =
-            restTemplate.postForEntity(
-                "$url/getToken",
-                entity,
-                TokenResponse::class.java,
-            )
+            val requestBody =
+                mapOf(
+                    "login" to login,
+                    "pass" to pass,
+                )
 
-        if (!response.statusCode.is2xxSuccessful || response.body?.token == null) {
+            val headers =
+                HttpHeaders().apply {
+                    contentType = MediaType.APPLICATION_JSON
+                }
+
+            val entity = HttpEntity(requestBody, headers)
+
+            val response =
+                restTemplate.postForEntity(
+                    "$url/$apiVersion/$GET_TOKEN",
+                    entity,
+                    TokenResponse::class.java,
+                )
+
+            val newToken = response.body!!.token ?: throw BusinessException(CODE_ERROR_UNAUTHORIZED, TraceId.get())
+            cache?.put(TOKEN, newToken)
+
+            return newToken
+        } catch (e: Exception) {
+            log.error(e, e.message)
             throw BusinessException(CODE_ERROR_UNAUTHORIZED, TraceId.get())
         }
-
-        val newToken = response.body?.token ?: throw BusinessException(CODE_ERROR_UNAUTHORIZED, TraceId.get())
-        cache?.put(TOKEN, newToken)
-
-        return newToken
     }
 
     override fun sendAtolRequest(
         document: PaymentDocument,
         items: List<PaymentItem>,
         payments: List<PaymentReceipt>,
+        apiVersion: String,
     ): String {
         try {
-            val token = getAtolToken()
-            val url =
-                "${configurationDataProperties.atolURL}/${configurationDataProperties.groupCode}/sell?token=$token"
+            val token = getAtolToken(apiVersion)
+
+            val atolURL = configurationDataProperties.atolURL
+            val groupCode = configurationDataProperties.groupCode
+
+            val url = "$atolURL/$apiVersion/$groupCode/$SELL_TOKEN$token"
 
             val request =
                 AtolRequest(
@@ -151,42 +159,35 @@ class AtolClientImpl(
                     timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")),
                 )
 
-            val requestJson = objectsMapper.writeValueAsString(request)
-            log.warn("Request JSON to Atol: $requestJson")
-
             val headers =
                 HttpHeaders().apply {
                     contentType = MediaType.APPLICATION_JSON
                 }
             val entity = HttpEntity(request, headers)
 
-            val rawResponse = restTemplate.exchange(url, HttpMethod.POST, entity, String::class.java)
-            log.warn("Response JSON from Atol: ${rawResponse.body}")
+            val response = restTemplate.postForEntity(url, entity, AtolResponse::class.java)
 
-            val responseObject = objectsMapper.readValue(rawResponse.body!!, AtolResponse::class.java)
-
-            if (responseObject.uuid.isEmpty()) {
-                throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND, TraceId.get())
-            }
-
-            return responseObject.uuid
+            return response.body!!.uuid
         } catch (e: BusinessException) {
             log.warn(e.message)
             throw e
         } catch (e: Exception) {
             log.warn(e.message)
-            throw InnerException(TraceId.get(), e.message)
+            throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND, TraceId.get())
         }
     }
 
-    override fun getPaymentStatus(document: PaymentDocument): String {
+    override fun getPaymentStatus(
+        externalId: String,
+        apiVersion: String,
+    ): String {
         try {
-            val token = getAtolToken()
-
-//        val apiVersion = document.apiVersion?.versionCode
+            val atolURL = configurationDataProperties.atolURL
             val groupCode = configurationDataProperties.groupCode
 
-            val url = "${configurationDataProperties.atolURL}/$groupCode/report/${document.externalId}"
+            val url = "$atolURL/$apiVersion/$groupCode/$REPORT/$externalId"
+
+            val token = getAtolToken(apiVersion)
 
             val headers =
                 HttpHeaders().apply {
@@ -196,22 +197,15 @@ class AtolClientImpl(
 
             val entity = HttpEntity<Unit>(headers)
 
-            val response = restTemplate.exchange(url, HttpMethod.GET, entity, String::class.java)
-            log.warn("Response JSON from Atol: ${response.body}")
+            val response = restTemplate.exchange(url, HttpMethod.GET, entity, AtolStatusResponse::class.java)
 
-            val responseObject = objectsMapper.readValue(response.body, AtolStatusResponse::class.java)
-
-//        if (!response.statusCode.is2xxSuccessful || response.body?.status == null) {
-//            throw BusinessException(CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND, TraceId.get())
-//        }
-
-            return responseObject.status
+            return response.body!!.status
         } catch (e: BusinessException) {
             log.warn(e.message)
             throw e
         } catch (e: Exception) {
             log.warn(e.message)
-            throw InnerException(TraceId.get(), e.message)
+            throw BusinessException(CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND, TraceId.get())
         }
     }
 }
