@@ -7,10 +7,12 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.web.client.RestTemplate
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
+import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UNAUTHORIZED
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND
 import ru.sogaz.site.filterStarter.util.TraceId
+import ru.sogaz.site.paymentReceiptService.loggerFor
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentDocument
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentItem
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentReceipt
@@ -28,121 +30,182 @@ class AtolClientImpl(
     private val cacheManager: CacheManager,
     private val configurationDataProperties: ConfigurationDataProperties,
 ) : AtolClient {
+    private val log = loggerFor(javaClass)
+
     companion object {
         private const val ATOL_TOKEN = "atolToken"
         private const val TOKEN = "token"
+        private const val GET_TOKEN = "getToken"
+        private const val SELL_TOKEN = "sell?token="
+        private const val REPORT = "report"
+
+        private const val PAYMENT_METHOD = "Payment Method not found in items"
+        private const val PAYMENT_OBJECT = "Payment Object not found in items"
+        private const val VAT_TYPE = "Vat Type not found in items"
+        private const val PAYMENT_TYPE = "Payment Type not found in payments"
     }
 
-    override fun getAtolToken(): String {
-        val cache = cacheManager.getCache(ATOL_TOKEN)
-        val cachedToken = cache?.get(TOKEN, String::class.java)
+    override fun getAtolToken(apiVersion: String): String {
+        try {
+            val cache = cacheManager.getCache(ATOL_TOKEN)
+            val cachedToken = cache?.get(TOKEN, String::class.java)
 
-        if (cachedToken != null) {
-            return cachedToken
-        }
+            if (cachedToken != null) {
+                return cachedToken
+            }
 
-        val login = configurationDataProperties.atolLogin
-        val pass = configurationDataProperties.atolPass
-        val url = configurationDataProperties.atolURL
+            val login = configurationDataProperties.atolLogin
+            val pass = configurationDataProperties.atolPass
+            val url = configurationDataProperties.atolURL
 
-        val tokenUrl: String =
-            "$url/getToken" + "?login=$login" + "&pass=$pass"
+            val requestBody =
+                mapOf(
+                    "login" to login,
+                    "pass" to pass,
+                )
 
-        val response = restTemplate.getForEntity(tokenUrl, TokenResponse::class.java)
+            val headers =
+                HttpHeaders().apply {
+                    contentType = MediaType.APPLICATION_JSON
+                }
 
-        if (!response.statusCode.is2xxSuccessful || response.body?.token == null) {
+            val entity = HttpEntity(requestBody, headers)
+
+            val response =
+                restTemplate.postForEntity(
+                    "$url/$apiVersion/$GET_TOKEN",
+                    entity,
+                    TokenResponse::class.java,
+                )
+
+            val newToken = response.body!!.token ?: throw BusinessException(CODE_ERROR_UNAUTHORIZED, TraceId.get())
+            cache?.put(TOKEN, newToken)
+
+            return newToken
+        } catch (e: Exception) {
+            log.error(e, e.message)
             throw BusinessException(CODE_ERROR_UNAUTHORIZED, TraceId.get())
         }
-
-        val newToken = response.body!!.token
-        cache?.put(TOKEN, newToken)
-
-        return newToken.toString()
     }
 
     override fun sendAtolRequest(
         document: PaymentDocument,
         items: List<PaymentItem>,
         payments: List<PaymentReceipt>,
+        apiVersion: String,
     ): String {
-        val token = getAtolToken()
-        val url = "${configurationDataProperties.atolURL}/sell?token=$token"
+        try {
+            val token = getAtolToken(apiVersion)
 
-        val request =
-            AtolRequest(
-                externalId = document.docId.toString(),
-                service =
-                    AtolRequest.AtolServiceData(
-                        callbackUrl = configurationDataProperties.callbackURL,
-                    ),
-                receipt =
-                    AtolRequest.AtolReceiptData(
-                        client =
-                            AtolRequest.AtolClientData(
-                                email = document.clientEmail,
-                                phone = document.clientPhone,
-                            ),
-                        company =
-                            AtolRequest.AtolCompanyData(
-                                email = configurationDataProperties.companyEmail,
-                                inn = configurationDataProperties.companyInn,
-                                paymentAddress = configurationDataProperties.paymentAddress,
-                            ),
-                        items =
-                            items.map { item ->
-                                AtolRequest.AtolItemData(
-                                    name = item.name,
-                                    price = item.price,
-                                    quantity = item.quantity,
-                                    sum = item.sum,
-                                    paymentMethod = item.paymentMethod.paymentMethodCode,
-                                    paymentObject = item.paymentObject.paymentObjectIdCode,
-                                    vat = AtolRequest.AtolVatData(type = item.vatType.vatTypeCode),
-                                )
-                            },
-                        payments =
-                            payments.map { payment ->
-                                AtolRequest.AtolPaymentData(
-                                    sum = payment.sum,
-                                    type = payment.paymentType.typeIdCode,
-                                )
-                            },
-                        total = document.total,
-                    ),
-                timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")),
-            )
+            val atolURL = configurationDataProperties.atolURL
+            val groupCode = configurationDataProperties.groupCode
 
-        val response = restTemplate.postForEntity(url, request, AtolResponse::class.java)
+            val url = "$atolURL/$apiVersion/$groupCode/$SELL_TOKEN$token"
 
-        if (!response.statusCode.is2xxSuccessful || response.body?.externalId == null) {
+            val request =
+                AtolRequest(
+                    externalId = document.docId.toString(),
+                    service =
+                        AtolRequest.AtolServiceData(
+                            callbackUrl = configurationDataProperties.callbackURL,
+                        ),
+                    receipt =
+                        AtolRequest.AtolReceiptData(
+                            client =
+                                AtolRequest.AtolClientData(
+                                    email = document.clientEmail,
+                                    phone = document.clientPhone,
+                                ),
+                            company =
+                                AtolRequest.AtolCompanyData(
+                                    email = configurationDataProperties.companyEmail,
+                                    inn = configurationDataProperties.companyInn,
+                                    paymentAddress = configurationDataProperties.paymentAddress,
+                                ),
+                            items =
+                                items.map { item ->
+                                    AtolRequest.AtolItemData(
+                                        name = item.name,
+                                        price = item.price,
+                                        quantity = item.quantity,
+                                        sum = item.sum,
+                                        paymentMethod =
+                                            item.paymentMethod?.paymentMethodCode
+                                                ?: throw InnerException(TraceId.get(), PAYMENT_METHOD),
+                                        paymentObject =
+                                            item.paymentObject?.paymentObjectIdCode
+                                                ?: throw InnerException(TraceId.get(), PAYMENT_OBJECT),
+                                        vat =
+                                            AtolRequest.AtolVatData(
+                                                type =
+                                                    item.vatType?.vatTypeCode
+                                                        ?: throw InnerException(TraceId.get(), VAT_TYPE),
+                                            ),
+                                    )
+                                },
+                            payments =
+                                payments.map { payment ->
+                                    AtolRequest.AtolPaymentData(
+                                        sum = payment.sum,
+                                        type =
+                                            payment.paymentType?.typeIdCode ?: throw InnerException(
+                                                TraceId.get(),
+                                                PAYMENT_TYPE,
+                                            ),
+                                    )
+                                },
+                            total = document.total,
+                        ),
+                    timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")),
+                )
+
+            val headers =
+                HttpHeaders().apply {
+                    contentType = MediaType.APPLICATION_JSON
+                }
+            val entity = HttpEntity(request, headers)
+
+            val response = restTemplate.postForEntity(url, entity, AtolResponse::class.java)
+
+            return response.body!!.uuid
+        } catch (e: BusinessException) {
+            log.warn(e.message)
+            throw e
+        } catch (e: Exception) {
+            log.warn(e.message)
             throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND, TraceId.get())
         }
-
-        return response.body!!.externalId
     }
 
-    override fun getPaymentStatus(document: PaymentDocument): String {
-        val token = getAtolToken()
+    override fun getPaymentStatus(
+        externalId: String,
+        apiVersion: String,
+    ): String {
+        try {
+            val atolURL = configurationDataProperties.atolURL
+            val groupCode = configurationDataProperties.groupCode
 
-        val apiVersion = document.apiVersion.versionCode
-        val groupCode = configurationDataProperties.groupCode
+            val url = "$atolURL/$apiVersion/$groupCode/$REPORT/$externalId"
 
-        val url = "${configurationDataProperties.atolURL}/$apiVersion/$groupCode/report/${document.externalId}"
+            val token = getAtolToken(apiVersion)
 
-        val headers =
-            HttpHeaders().apply {
-                set("Token", token) // Передаём токен
-                contentType = MediaType.APPLICATION_JSON
-            }
+            val headers =
+                HttpHeaders().apply {
+                    set("Token", token)
+                    contentType = MediaType.APPLICATION_JSON
+                }
 
-        val entity = HttpEntity<Unit>(headers)
+            val entity = HttpEntity<Unit>(headers)
 
-        val response = restTemplate.exchange(url, HttpMethod.GET, entity, AtolStatusResponse::class.java)
+            val response = restTemplate.exchange(url, HttpMethod.GET, entity, AtolStatusResponse::class.java)
 
-        if (!response.statusCode.is2xxSuccessful || response.body?.status == null) {
+            return response.body!!.status
+        } catch (e: BusinessException) {
+            log.warn(e.message)
+            throw e
+        } catch (e: Exception) {
+            log.warn(e.message)
             throw BusinessException(CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND, TraceId.get())
         }
-
-        return response.body!!.status
     }
 }

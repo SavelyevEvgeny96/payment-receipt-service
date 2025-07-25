@@ -12,6 +12,7 @@ import ru.sogaz.site.paymentReceiptService.mapper.PaymentDocumentMapper
 import ru.sogaz.site.paymentReceiptService.mapper.PaymentItemMapper
 import ru.sogaz.site.paymentReceiptService.mapper.PaymentReceiptMapper
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentDocument
+import ru.sogaz.site.paymentReceiptService.model.reference.ApiVersion
 import ru.sogaz.site.paymentReceiptService.model.reference.CheckStatus
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptCreateRequest
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptStatusRequest
@@ -57,12 +58,15 @@ class PaymentReceiptServiceImplTest {
         val request = mock(PaymentReceiptCreateRequest::class.java)
         val document = mock(PaymentDocument::class.java)
         val status = mock(CheckStatus::class.java)
+        val apiVersion = mock(ApiVersion::class.java)
 
         `when`(paymentDocumentMapper.toPaymentDocument(request)).thenReturn(document)
+        `when`(document.apiVersion).thenReturn(apiVersion)
+        `when`(apiVersion.versionCode).thenReturn("v4")
         `when`(request.items).thenReturn(emptyList())
         `when`(request.payments).thenReturn(emptyList())
-        `when`(atolClient.sendAtolRequest(document, emptyList(), emptyList())).thenReturn("ext-123")
-        `when`(checkStatusRepository.findByStateId("WAIT")).thenReturn(status)
+        `when`(atolClient.sendAtolRequest(document, emptyList(), emptyList(), "v4")).thenReturn("ext-123")
+        `when`(checkStatusRepository.findByStateId("wait")).thenReturn(status)
 
         val response = service.createReceipt(request)
 
@@ -106,7 +110,7 @@ class PaymentReceiptServiceImplTest {
         val status = mock(CheckStatus::class.java)
 
         `when`(paymentDocumentRepository.findByExternalId("ext-123")).thenReturn(document)
-        `when`(checkStatusRepository.findByStateId("DONE")).thenReturn(status)
+        `when`(checkStatusRepository.findByStateId("done")).thenReturn(status)
 
         val response = service.updateStatus(request)
 
@@ -119,9 +123,12 @@ class PaymentReceiptServiceImplTest {
         val request = PaymentReceiptUpdateRequest("ext-123")
         val document = mock(PaymentDocument::class.java)
         val status = CheckStatus(UUID.randomUUID(), "done", "Готово")
+        val apiVersion = mock(ApiVersion::class.java)
 
         `when`(paymentDocumentRepository.findByExternalId("ext-123")).thenReturn(document)
-        `when`(atolClient.getPaymentStatus(document)).thenReturn("done")
+        `when`(document.apiVersion).thenReturn(apiVersion)
+        `when`(apiVersion.versionCode).thenReturn("v4")
+        `when`(atolClient.getPaymentStatus(request.externalId, "v4")).thenReturn("done")
         `when`(checkStatusRepository.findByStateId("done")).thenReturn(status)
 
         val response = service.getStatus(request)

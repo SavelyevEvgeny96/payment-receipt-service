@@ -20,22 +20,22 @@ data class PaymentItem(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     val itemId: UUID = UUID.randomUUID(),
-    val name: String,
-    val price: Double,
-    val quantity: Double,
-    val sum: Double,
+    var name: String = "",
+    var price: Double = 0.0,
+    var quantity: Double = 0.0,
+    var sum: Double = 0.0,
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_method_id")
-    val paymentMethod: PaymentMethod,
+    @JoinColumn(name = "payment_method_id", nullable = false)
+    var paymentMethod: PaymentMethod? = null,
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_object_id")
-    val paymentObject: PaymentObject,
+    @JoinColumn(name = "payment_object_id", nullable = false)
+    var paymentObject: PaymentObject? = null,
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "vat_type_id")
-    val vatType: VatType,
+    @JoinColumn(name = "vat_type_id", nullable = false)
+    var vatType: VatType? = null,
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "doc_id")
-    val document: PaymentDocument,
-    val dateCreate: LocalDateTime = LocalDateTime.now(),
-    val dateUpdate: LocalDateTime = LocalDateTime.now(),
+    @JoinColumn(name = "doc_id", nullable = false)
+    var document: PaymentDocument? = null,
+    var dateCreate: LocalDateTime = LocalDateTime.now(),
+    var dateUpdate: LocalDateTime = LocalDateTime.now(),
 )

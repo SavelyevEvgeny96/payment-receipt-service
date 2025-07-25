@@ -6,4 +6,7 @@ enum class DocumentStatus(
     WAIT("wait"),
     DONE("done"),
     FAIL("fail"),
+    ;
+
+    override fun toString(): String = value
 }

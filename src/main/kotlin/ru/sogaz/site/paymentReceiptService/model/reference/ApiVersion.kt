@@ -14,8 +14,8 @@ data class ApiVersion(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     val versionId: UUID = UUID.randomUUID(),
-    val versionCode: String,
-    val versionName: String,
+    val versionCode: String = "",
+    val versionName: String = "",
     val dateCreate: LocalDateTime = LocalDateTime.now(),
     val dateUpdate: LocalDateTime = LocalDateTime.now(),
 )

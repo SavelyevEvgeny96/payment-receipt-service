@@ -61,8 +61,8 @@ logging:
           pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:DEBUG}
 
 config:
-  atolURL: ${ATOL_URL:https://testonline.atol.ru/possystem/v4/}
-  AtolLogin: ${ATOL_LOGIN:v4-online-atol-ru }
+  atolURL: ${ATOL_URL:https://testonline.atol.ru/possystem}
+  AtolLogin: ${ATOL_LOGIN:v4-online-atol-ru}
   AtolPass: ${ATOL_PASS:iGFFuihss}
   tokenTime: ${TOKEN_TIME:720}
   callbackURL: ${CALLBACK_URL:http://localhost:8080/paymentCheck/status}

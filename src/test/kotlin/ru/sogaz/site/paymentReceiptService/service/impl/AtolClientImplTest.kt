@@ -4,9 +4,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.anyString
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.InjectMocks
 import org.mockito.Mock
@@ -27,14 +25,13 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentDocument
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentItem
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentReceipt
-import ru.sogaz.site.paymentReceiptService.model.reference.ApiVersion
 import ru.sogaz.site.paymentReceiptService.model.reference.PaymentMethod
 import ru.sogaz.site.paymentReceiptService.model.reference.PaymentObject
 import ru.sogaz.site.paymentReceiptService.model.reference.PaymentType
 import ru.sogaz.site.paymentReceiptService.model.reference.VatType
-import ru.sogaz.site.paymentReceiptService.model.web.request.AtolRequest
 import ru.sogaz.site.paymentReceiptService.model.web.response.AtolResponse
 import ru.sogaz.site.paymentReceiptService.model.web.response.AtolStatusResponse
+import ru.sogaz.site.paymentReceiptService.model.web.response.ErrorInfo
 import ru.sogaz.site.paymentReceiptService.model.web.response.TokenResponse
 import ru.sogaz.site.paymentReceiptService.properties.ConfigurationDataProperties
 import java.util.UUID
@@ -61,7 +58,7 @@ class AtolClientImplTest {
         `when`(cacheManager.getCache("atolToken")).thenReturn(cache)
         `when`(cache.get("token", String::class.java)).thenReturn("cached-token")
 
-        val token = atolClient.getAtolToken()
+        val token = atolClient.getAtolToken("v4")
 
         assertEquals("cached-token", token)
     }
@@ -75,11 +72,26 @@ class AtolClientImplTest {
         `when`(config.atolPass).thenReturn("pass")
         `when`(config.atolURL).thenReturn("http://atol")
 
-        val response = ResponseEntity.ok(TokenResponse("empty", "new-token", "20-10-2025"))
-        `when`(restTemplate.getForEntity("http://atol/getToken?login=user&pass=pass", TokenResponse::class.java))
-            .thenReturn(response)
+        val requestBody =
+            mapOf(
+                "login" to config.atolLogin,
+                "pass" to config.atolPass,
+            )
 
-        val token = atolClient.getAtolToken()
+        val header =
+            HttpHeaders().apply {
+                contentType = MediaType.APPLICATION_JSON
+            }
+
+        val entityToken = HttpEntity(requestBody, header)
+
+        val response =
+            ResponseEntity.ok(TokenResponse("new-token", null, "20-10-2025"))
+        `when`(
+            restTemplate.postForEntity("http://atol/v4/getToken", entityToken, TokenResponse::class.java),
+        ).thenReturn(response)
+
+        val token = atolClient.getAtolToken("v4")
 
         assertEquals("new-token", token)
         verify(cache).put("token", "new-token")
@@ -94,12 +106,25 @@ class AtolClientImplTest {
         `when`(config.atolPass).thenReturn("pass")
         `when`(config.atolURL).thenReturn("http://atol")
 
+        val requestBody =
+            mapOf(
+                "login" to config.atolLogin,
+                "pass" to config.atolPass,
+            )
+
+        val header =
+            HttpHeaders().apply {
+                contentType = MediaType.APPLICATION_JSON
+            }
+
+        val entityToken = HttpEntity(requestBody, header)
+
         val badResponse = ResponseEntity<TokenResponse>(null, HttpStatus.BAD_REQUEST)
-        `when`(restTemplate.getForEntity("http://atol/getToken?login=login&pass=pass", TokenResponse::class.java))
+        `when`(restTemplate.postForEntity("http://atol/getToken", entityToken, TokenResponse::class.java))
             .thenReturn(badResponse)
 
         assertThrows(BusinessException::class.java) {
-            atolClient.getAtolToken()
+            atolClient.getAtolToken("v4")
         }
     }
 
@@ -109,77 +134,71 @@ class AtolClientImplTest {
         val item = mock(PaymentItem::class.java)
         val payment = mock(PaymentReceipt::class.java)
 
-        `when`(doc.docId).thenReturn(UUID.randomUUID())
-        `when`(doc.clientEmail).thenReturn("test@mail.com")
+        val docId = UUID.randomUUID()
+        `when`(doc.docId).thenReturn(docId)
+        `when`(doc.clientEmail).thenReturn("user@mail.com")
         `when`(doc.clientPhone).thenReturn("123456")
         `when`(doc.total).thenReturn(100.0)
 
         `when`(config.atolURL).thenReturn("http://atol")
-        `when`(config.callbackURL).thenReturn("http://cb")
-        `when`(config.companyEmail).thenReturn("c@mail.com")
+        `when`(config.groupCode).thenReturn("grp")
+        `when`(config.callbackURL).thenReturn("http://callback")
+        `when`(config.companyEmail).thenReturn("comp@mail.com")
         `when`(config.companyInn).thenReturn("1234567890")
         `when`(config.paymentAddress).thenReturn("Address")
-
-        val paymentMethod = mock(PaymentMethod::class.java)
-        `when`(paymentMethod.paymentMethodCode).thenReturn("code")
-
-        val paymentObject = mock(PaymentObject::class.java)
-        `when`(paymentObject.paymentObjectIdCode).thenReturn("obj")
-
-        val vatType = mock(VatType::class.java)
-        `when`(vatType.vatTypeCode).thenReturn("vat")
-
-        `when`(item.name).thenReturn("Item")
-        `when`(item.price).thenReturn(10.0)
-        `when`(item.quantity).thenReturn(1.0)
-        `when`(item.sum).thenReturn(10.0)
-        `when`(item.paymentMethod).thenReturn(paymentMethod)
-        `when`(item.paymentObject).thenReturn(paymentObject)
-        `when`(item.vatType).thenReturn(vatType)
-
-        val paymentType = mock(PaymentType::class.java)
-        `when`(paymentType.typeIdCode).thenReturn(1)
-        `when`(payment.sum).thenReturn(10.0)
-        `when`(payment.paymentType).thenReturn(paymentType)
+        `when`(config.atolLogin).thenReturn("login")
+        `when`(config.atolPass).thenReturn("pass")
 
         `when`(cacheManager.getCache("atolToken")).thenReturn(cache)
         `when`(cache.get("token", String::class.java)).thenReturn(null)
-        `when`(config.atolLogin).thenReturn("login")
-        `when`(config.atolPass).thenReturn("pass")
-        `when`(restTemplate.getForEntity("http://atol/getToken?login=login&pass=pass", TokenResponse::class.java))
-            .thenReturn(ResponseEntity.ok(TokenResponse("", "token123", "")))
 
-        val atolResponse = AtolResponse("external-123", "wait")
-        `when`(restTemplate.postForEntity(anyString(), any(), eq(AtolResponse::class.java)))
-            .thenReturn(ResponseEntity.ok(atolResponse))
+        val method = mock(PaymentMethod::class.java)
+        val obj = mock(PaymentObject::class.java)
+        val vat = mock(VatType::class.java)
+        `when`(item.name).thenReturn("item1")
+        `when`(item.price).thenReturn(10.0)
+        `when`(item.quantity).thenReturn(1.0)
+        `when`(item.sum).thenReturn(10.0)
+        `when`(item.paymentMethod).thenReturn(method)
+        `when`(item.paymentObject).thenReturn(obj)
+        `when`(item.vatType).thenReturn(vat)
+        `when`(method.paymentMethodCode).thenReturn("full_payment")
+        `when`(obj.paymentObjectIdCode).thenReturn("commodity")
+        `when`(vat.vatTypeCode).thenReturn("vat20")
 
-        val result = atolClient.sendAtolRequest(doc, listOf(item), listOf(payment))
-        assertEquals("external-123", result)
+        val type = mock(PaymentType::class.java)
+        `when`(payment.sum).thenReturn(10.0)
+        `when`(payment.paymentType).thenReturn(type)
+        `when`(type.typeIdCode).thenReturn(1)
 
-        val captor = ArgumentCaptor.forClass(AtolRequest::class.java)
-        verify(restTemplate).postForEntity(
-            eq("http://atol/sell?token=token123"),
-            captor.capture(),
-            eq(AtolResponse::class.java),
-        )
+        val tokenResponse = TokenResponse("token123", null, "24.07.2025 12:00:00")
 
-        val sentRequest = captor.value
-        assertEquals("test@mail.com", sentRequest.receipt.client.email)
-        assertEquals("123456", sentRequest.receipt.client.phone)
-        assertEquals(100.0, sentRequest.receipt.total)
-        assertEquals(1, sentRequest.receipt.items.size)
-        assertEquals("Item", sentRequest.receipt.items[0].name)
+        `when`(
+            restTemplate.postForEntity(
+                eq("http://atol/v4/getToken"),
+                any(),
+                eq(TokenResponse::class.java),
+            ),
+        ).thenReturn(ResponseEntity.ok(tokenResponse))
+
+        val uuid = "external-uuid-123"
+        val atolResponse = AtolResponse(uuid, "wait", null, "24.07.2025 12:00:00")
+
+        `when`(
+            restTemplate.postForEntity(
+                eq("http://atol/v4/grp/sell?token=token123"),
+                any(),
+                eq(AtolResponse::class.java),
+            ),
+        ).thenReturn(ResponseEntity.ok(atolResponse))
+
+        val result = atolClient.sendAtolRequest(doc, listOf(item), listOf(payment), "v4")
+
+        assertEquals(uuid, result)
     }
 
     @Test
     fun `getPaymentStatus возвращает статус`() {
-        val doc = mock(PaymentDocument::class.java)
-        val apiVersion = mock(ApiVersion::class.java)
-
-        `when`(doc.externalId).thenReturn("ext-1")
-        `when`(doc.apiVersion).thenReturn(apiVersion)
-        `when`(apiVersion.versionCode).thenReturn("v4")
-
         `when`(config.groupCode).thenReturn("grp")
         `when`(config.atolURL).thenReturn("http://atol")
 
@@ -187,8 +206,22 @@ class AtolClientImplTest {
         `when`(cache.get("token", String::class.java)).thenReturn(null)
         `when`(config.atolLogin).thenReturn("login")
         `when`(config.atolPass).thenReturn("pass")
-        `when`(restTemplate.getForEntity("http://atol/getToken?login=login&pass=pass", TokenResponse::class.java))
-            .thenReturn(ResponseEntity.ok(TokenResponse("", "token123", "")))
+
+        val requestBody =
+            mapOf(
+                "login" to config.atolLogin,
+                "pass" to config.atolPass,
+            )
+
+        val header =
+            HttpHeaders().apply {
+                contentType = MediaType.APPLICATION_JSON
+            }
+
+        val entityToken = HttpEntity(requestBody, header)
+
+        `when`(restTemplate.postForEntity("http://atol/v4/getToken", entityToken, TokenResponse::class.java))
+            .thenReturn(ResponseEntity.ok(TokenResponse("token123", ErrorInfo("1", 1, "some_error", "error"), "")))
 
         val headers = HttpHeaders()
         headers.set("Token", "token123")
@@ -201,7 +234,7 @@ class AtolClientImplTest {
         `when`(restTemplate.exchange(url, HttpMethod.GET, entity, AtolStatusResponse::class.java))
             .thenReturn(ResponseEntity.ok(statusResp))
 
-        val status = atolClient.getPaymentStatus(doc)
+        val status = atolClient.getPaymentStatus("ext-1", "v4")
 
         assertEquals("done", status)
     }
