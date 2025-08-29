@@ -11,7 +11,7 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UNAUTHORIZED
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND
-import ru.sogaz.site.filterStarter.util.TraceId
+import ru.sogaz.site.filterStarter.services.RequestInfo
 import ru.sogaz.site.paymentReceiptService.loggerFor
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentDocument
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentItem
@@ -78,13 +78,13 @@ class AtolClientImpl(
                     TokenResponse::class.java,
                 )
 
-            val newToken = response.body!!.token ?: throw BusinessException(CODE_ERROR_UNAUTHORIZED, TraceId.get())
+            val newToken = response.body!!.token ?: throw BusinessException(CODE_ERROR_UNAUTHORIZED, RequestInfo.getTraceId())
             cache?.put(TOKEN, newToken)
 
             return newToken
         } catch (e: Exception) {
             log.error(e, e.message)
-            throw BusinessException(CODE_ERROR_UNAUTHORIZED, TraceId.get())
+            throw BusinessException(CODE_ERROR_UNAUTHORIZED, RequestInfo.getTraceId())
         }
     }
 
@@ -94,6 +94,7 @@ class AtolClientImpl(
         payments: List<PaymentReceipt>,
         apiVersion: String,
     ): String {
+        val traceId = RequestInfo.getTraceId()
         try {
             val token = getAtolToken(apiVersion)
 
@@ -131,15 +132,15 @@ class AtolClientImpl(
                                         sum = item.sum,
                                         paymentMethod =
                                             item.paymentMethod?.paymentMethodCode
-                                                ?: throw InnerException(TraceId.get(), PAYMENT_METHOD),
+                                                ?: throw InnerException(traceId, PAYMENT_METHOD),
                                         paymentObject =
                                             item.paymentObject?.paymentObjectIdCode
-                                                ?: throw InnerException(TraceId.get(), PAYMENT_OBJECT),
+                                                ?: throw InnerException(traceId, PAYMENT_OBJECT),
                                         vat =
                                             AtolRequest.AtolVatData(
                                                 type =
                                                     item.vatType?.vatTypeCode
-                                                        ?: throw InnerException(TraceId.get(), VAT_TYPE),
+                                                        ?: throw InnerException(traceId, VAT_TYPE),
                                             ),
                                     )
                                 },
@@ -149,7 +150,7 @@ class AtolClientImpl(
                                         sum = payment.sum,
                                         type =
                                             payment.paymentType?.typeIdCode ?: throw InnerException(
-                                                TraceId.get(),
+                                                traceId,
                                                 PAYMENT_TYPE,
                                             ),
                                     )
@@ -173,7 +174,7 @@ class AtolClientImpl(
             throw e
         } catch (e: Exception) {
             log.warn(e.message)
-            throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND, TraceId.get())
+            throw BusinessException(CODE_ERROR_PAYMENT_SYSTEM_NOT_FOUND, traceId)
         }
     }
 
@@ -181,6 +182,7 @@ class AtolClientImpl(
         externalId: String,
         apiVersion: String,
     ): String {
+        val traceId = RequestInfo.getTraceId()
         try {
             val atolURL = configurationDataProperties.atolURL
             val groupCode = configurationDataProperties.groupCode
@@ -205,7 +207,7 @@ class AtolClientImpl(
             throw e
         } catch (e: Exception) {
             log.warn(e.message)
-            throw BusinessException(CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND, TraceId.get())
+            throw BusinessException(CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND, traceId)
         }
     }
 }

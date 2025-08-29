@@ -4,10 +4,8 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import ru.sogaz.site.exceptionStarter.starter.service.ExceptionHandler.Companion.TRACE_ID
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptCreateRequest
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptStatusRequest
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptUpdateRequest
@@ -26,7 +24,6 @@ class PaymentReceiptController(
 ) {
     @PostMapping("/create")
     fun createPaymentCheck(
-        @RequestHeader(TRACE_ID) traceId: String,
         @RequestBody request: PaymentReceiptCreateRequest,
     ): ResponseEntity<Response<PaymentReceiptCreateResponse>> {
         paymentReceiptCreateRequestValidation.isValid(request)
@@ -35,13 +32,11 @@ class PaymentReceiptController(
 
     @PostMapping("/status")
     fun updatePaymentStatus(
-        @RequestHeader(TRACE_ID) traceId: String,
         @RequestBody request: PaymentReceiptStatusRequest,
     ): ResponseEntity<Response<PaymentReceiptStatusResponse>> = ResponseEntity.ok(paymentReceiptService.updateStatus(request))
 
     @PatchMapping("/statusUpdate")
     fun getPaymentStatus(
-        @RequestHeader(TRACE_ID) traceId: String,
         @RequestBody request: PaymentReceiptUpdateRequest,
     ): ResponseEntity<Response<PaymentReceiptUpdateResponse>> = ResponseEntity.ok(paymentReceiptService.getStatus(request))
 }

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty scope="context" name="host" source="logstash.host"/>
+    <springProperty scope="context" name="port" source="logstash.port"/>
+    <springProperty scope="context" name="level" source="logstash.level"/>
+    <springProperty scope="context" name="level_test" source="logstash.level_test"/>
+    <springProperty scope="context" name="env" source="spring.profiles.active"/>
+    <springProperty scope="context" name="service" source="spring.application.name"/>
+
+    <!-- Console appender -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} - %level - [%thread] - %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="GELF-TCP" class="de.siegmar.logbackgelf.GelfTcpAppender">
+        <graylogHost>${host}</graylogHost>
+        <graylogPort>${port}</graylogPort>
+        <encoder class="de.siegmar.logbackgelf.GelfEncoder">
+            <originHost>${service}</originHost>
+            <includeRawMessage>false</includeRawMessage>
+            <includeMarker>true</includeMarker>
+            <includeMdcData>true</includeMdcData>
+            <includeCallerData>true</includeCallerData>
+            <includeRootCauseData>true</includeRootCauseData>
+            <includeLevelName>true</includeLevelName>
+            <fullPatternLayout class="ch.qos.logback.classic.PatternLayout">
+                <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %cyan(%logger{18}) - %msg%n</pattern>
+            </fullPatternLayout>
+            <staticField>application:${service}</staticField>
+            <staticField>environment:${env}</staticField>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC GELF-TCP" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="GELF-TCP" />
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <springProfile name="local">
+        <root level="${level_test}">
+            <appender-ref ref="STDOUT"/>
+        </root>
+    </springProfile>
+    <springProfile name="dev">
+        <root level="${level_test}">
+            <appender-ref ref="GELF_TCP"/>
+        </root>
+    </springProfile>
+    <springProfile name="test">
+        <root level="${level_test}">
+            <appender-ref ref="GELF_TCP"/>
+        </root>
+    </springProfile>
+    <springProfile name="stage">
+        <root level="${level}">
+            <appender-ref ref="GELF_TCP"/>
+        </root>
+    </springProfile>
+    <springProfile name="prod">
+        <root level="${level}">
+            <appender-ref ref="GELF_TCP"/>
+        </root>
+    </springProfile>
+    <springProfile name="default">
+        <root level="${level}">
+            <appender-ref ref="GELF_TCP"/>
+        </root>
+    </springProfile>
+</configuration>

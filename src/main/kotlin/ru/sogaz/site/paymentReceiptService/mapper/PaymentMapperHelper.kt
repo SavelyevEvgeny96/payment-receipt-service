@@ -5,7 +5,7 @@ import org.mapstruct.MappingTarget
 import org.mapstruct.Named
 import org.springframework.stereotype.Component
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.filterStarter.util.TraceId
+import ru.sogaz.site.filterStarter.services.RequestInfo
 import ru.sogaz.site.paymentReceiptService.model.entity.PaymentDocument
 import ru.sogaz.site.paymentReceiptService.model.reference.ApiVersion
 import ru.sogaz.site.paymentReceiptService.model.reference.CashRegister
@@ -37,31 +37,32 @@ class PaymentMapperHelper(
 
     @Named("mapSystem")
     fun mapSystem(system: String): CashRegister =
-        cashRegisterRepository.findBySystemCode(system) ?: throw InnerException(TraceId.get(), NOT_FOUND)
+        cashRegisterRepository.findBySystemCode(system) ?: throw InnerException(RequestInfo.getTraceId(), NOT_FOUND)
 
     @Named("mapVersion")
     fun mapVersion(version: String): ApiVersion =
-        apiVersionRepository.findByVersionCode(version) ?: throw InnerException(TraceId.get(), NOT_FOUND)
+        apiVersionRepository.findByVersionCode(version) ?: throw InnerException(RequestInfo.getTraceId(), NOT_FOUND)
 
     @Named("mapPaymentMethod")
     fun mapPaymentMethod(code: String): PaymentMethod =
-        paymentMethodRepository.findByPaymentMethodCode(code) ?: throw InnerException(TraceId.get(), NOT_FOUND)
+        paymentMethodRepository.findByPaymentMethodCode(code) ?: throw InnerException(RequestInfo.getTraceId(), NOT_FOUND)
 
     @Named("mapPaymentObject")
     fun mapPaymentObject(code: String): PaymentObject =
-        paymentObjectRepository.findByPaymentObjectIdCode(code) ?: throw InnerException(TraceId.get(), NOT_FOUND)
+        paymentObjectRepository.findByPaymentObjectIdCode(code) ?: throw InnerException(RequestInfo.getTraceId(), NOT_FOUND)
 
     @Named("mapVatType")
-    fun mapVatType(code: String): VatType = vatTypeRepository.findByVatTypeCode(code) ?: throw InnerException(TraceId.get(), NOT_FOUND)
+    fun mapVatType(code: String): VatType =
+        vatTypeRepository.findByVatTypeCode(code) ?: throw InnerException(RequestInfo.getTraceId(), NOT_FOUND)
 
     @Named("mapPaymentType")
     fun mapPaymentType(code: String): PaymentType =
-        paymentTypeRepository.findByTypeIdCode(code.toInt()) ?: throw InnerException(TraceId.get(), NOT_FOUND)
+        paymentTypeRepository.findByTypeIdCode(code.toInt()) ?: throw InnerException(RequestInfo.getTraceId(), NOT_FOUND)
 
     @AfterMapping
     fun setInitialStatus(
         @MappingTarget document: PaymentDocument,
     ) {
-        document.status = checkStatusRepository.findByStateId("new") ?: throw InnerException(TraceId.get(), NOT_FOUND)
+        document.status = checkStatusRepository.findByStateId("new") ?: throw InnerException(RequestInfo.getTraceId(), NOT_FOUND)
     }
 }
