@@ -27,7 +27,7 @@ import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.PHONE
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.PHONE_VALIDATION
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.VAT_TYPE
-import ru.sogaz.site.filterStarter.util.TraceId
+import ru.sogaz.site.filterStarter.services.RequestInfo
 import ru.sogaz.site.paymentReceiptService.loggerFor
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptCreateRequest
 import ru.sogaz.site.paymentReceiptService.repository.reference.ApiVersionRepository
@@ -59,7 +59,7 @@ class PaymentReceiptCreateRequestValidation(
     private val logger = loggerFor(javaClass)
 
     fun isValid(request: PaymentReceiptCreateRequest) {
-        val traceId = TraceId.get()
+        val traceId = RequestInfo.getTraceId()
         logger.info("Начало валидации для traceId: $traceId")
 
         val validationErrors = CustomPaymentReceiptErrors.Companion.validationErrors

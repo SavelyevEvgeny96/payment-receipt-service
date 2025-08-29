@@ -3,7 +3,7 @@ package ru.sogaz.site.paymentReceiptService.service.impl
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UPDATE_STATUS_ID_NOT_FOUND
-import ru.sogaz.site.filterStarter.util.TraceId
+import ru.sogaz.site.filterStarter.services.RequestInfo
 import ru.sogaz.site.paymentReceiptService.mapper.PaymentDocumentMapper
 import ru.sogaz.site.paymentReceiptService.mapper.PaymentItemMapper
 import ru.sogaz.site.paymentReceiptService.mapper.PaymentReceiptMapper
@@ -45,7 +45,7 @@ class PaymentReceiptServiceImpl(
     }
 
     override fun createReceipt(request: PaymentReceiptCreateRequest): Response<PaymentReceiptCreateResponse> {
-        val traceId = TraceId.get()
+        val traceId = RequestInfo.getTraceId()
 
         val document = paymentDocumentMapper.toPaymentDocument(request)
         paymentDocumentRepository.save(document)
@@ -56,7 +56,7 @@ class PaymentReceiptServiceImpl(
         val payments = request.payments.map { paymentReceiptMapper.toPaymentReceipt(it, document) }
         paymentReceiptRepository.saveAll(payments)
 
-        val apiVersion = document.apiVersion?.versionCode ?: throw InnerException(TraceId.get(), API_VERSION)
+        val apiVersion = document.apiVersion?.versionCode ?: throw InnerException(traceId, API_VERSION)
 
         val externalId = atolClient.sendAtolRequest(document, items, payments, apiVersion)
 
@@ -74,7 +74,7 @@ class PaymentReceiptServiceImpl(
     }
 
     override fun updateStatus(request: PaymentReceiptStatusRequest): Response<PaymentReceiptStatusResponse> {
-        val traceId = TraceId.get()
+        val traceId = RequestInfo.getTraceId()
 
         val paymentDocument =
             paymentDocumentRepository.findByExternalId(request.externalId)
@@ -97,13 +97,13 @@ class PaymentReceiptServiceImpl(
     }
 
     override fun getStatus(request: PaymentReceiptUpdateRequest): Response<PaymentReceiptUpdateResponse> {
-        val traceId = TraceId.get()
+        val traceId = RequestInfo.getTraceId()
 
         val externalId = request.externalId
         val document =
             paymentDocumentRepository.findByExternalId(externalId)
                 ?: throw InnerException(traceId, PAYMENT_DOCUMENT_NOT_FOUND)
-        val apiVersion = document.apiVersion?.versionCode ?: throw InnerException(TraceId.get(), API_VERSION)
+        val apiVersion = document.apiVersion?.versionCode ?: throw InnerException(traceId, API_VERSION)
 
         val atolStatus = atolClient.getPaymentStatus(externalId, apiVersion)
 
