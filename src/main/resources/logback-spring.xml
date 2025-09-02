@@ -43,29 +43,20 @@
             <appender-ref ref="STDOUT"/>
         </root>
     </springProfile>
-    <springProfile name="dev">
+    <springProfile name="dev || test">
         <root level="${level_test}">
-            <appender-ref ref="GELF_TCP"/>
+            <appender-ref ref="GELF-TCP"/>
         </root>
     </springProfile>
-    <springProfile name="test">
-        <root level="${level_test}">
-            <appender-ref ref="GELF_TCP"/>
-        </root>
-    </springProfile>
-    <springProfile name="stage">
+    <springProfile name="prod || stage">
         <root level="${level}">
-            <appender-ref ref="GELF_TCP"/>
-        </root>
-    </springProfile>
-    <springProfile name="prod">
-        <root level="${level}">
-            <appender-ref ref="GELF_TCP"/>
+            <appender-ref ref="ASYNC GELF-TCP"/>
         </root>
     </springProfile>
     <springProfile name="default">
         <root level="${level}">
-            <appender-ref ref="GELF_TCP"/>
+            <appender-ref ref="STDOUT"/>
+            <appender-ref ref="ASYNC GELF-TCP"/>
         </root>
     </springProfile>
 </configuration>
