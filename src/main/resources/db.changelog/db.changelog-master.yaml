@@ -1,0 +1,4 @@
+# append new changeset at the end
+databaseChangeLog:
+  - include:
+      file: db.changelog/initial-scheme/initial-scheme.yaml

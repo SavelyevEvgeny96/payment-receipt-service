@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: db.changelog/initial-scheme/sql/create_all_tables.sql
+  - include:
+      file: db.changelog/initial-scheme/sql/insert_reference_data.sql
