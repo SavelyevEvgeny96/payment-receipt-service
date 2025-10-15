@@ -81,6 +81,7 @@ class ApiConfig(
             restTemplate(),
             cacheManager,
             configurationDataProperties,
+            objectsMapper()
         )
 
     @Bean
