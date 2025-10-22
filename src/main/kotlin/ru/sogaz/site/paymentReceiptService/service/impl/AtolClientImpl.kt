@@ -172,6 +172,8 @@ class AtolClientImpl(
 
             val response = restTemplate.postForEntity(url, entity, AtolResponse::class.java)
 
+            log.warn(objectMapper.writeValueAsString(response))
+
             return response.body!!.uuid
         } catch (e: BusinessException) {
             log.warn(e.message)
