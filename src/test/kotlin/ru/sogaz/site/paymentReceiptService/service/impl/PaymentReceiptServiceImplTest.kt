@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentReceiptService.service.impl
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -49,6 +50,9 @@ class PaymentReceiptServiceImplTest {
 
     @Mock
     lateinit var paymentReceiptMapper: PaymentReceiptMapper
+
+    @Mock
+    lateinit var objectMapper: ObjectMapper
 
     @InjectMocks
     lateinit var service: PaymentReceiptServiceImpl

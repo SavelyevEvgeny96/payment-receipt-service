@@ -1,9 +1,11 @@
 package ru.sogaz.site.paymentReceiptService.service.impl
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UPDATE_STATUS_ID_NOT_FOUND
 import ru.sogaz.site.filterStarter.services.RequestInfo
+import ru.sogaz.site.paymentReceiptService.loggerFor
 import ru.sogaz.site.paymentReceiptService.mapper.PaymentDocumentMapper
 import ru.sogaz.site.paymentReceiptService.mapper.PaymentItemMapper
 import ru.sogaz.site.paymentReceiptService.mapper.PaymentReceiptMapper
@@ -33,7 +35,10 @@ class PaymentReceiptServiceImpl(
     private val paymentDocumentMapper: PaymentDocumentMapper,
     private val paymentItemMapper: PaymentItemMapper,
     private val paymentReceiptMapper: PaymentReceiptMapper,
+    private val objectMapper: ObjectMapper,
 ) : PaymentReceiptService {
+    private val logger = loggerFor(javaClass)
+
     companion object {
         const val CREATE_RECEIPT_CODE_SUCCESS = 1101550200
         const val UPDATE_STATUS_CODE_SUCCESS = 1101560200
@@ -75,6 +80,8 @@ class PaymentReceiptServiceImpl(
 
     override fun updateStatus(request: PaymentReceiptStatusRequest): Response<PaymentReceiptStatusResponse> {
         val traceId = RequestInfo.getTraceId()
+
+        logger.info(objectMapper.writeValueAsString(request))
 
         val paymentDocument =
             paymentDocumentRepository.findByExternalId(request.externalId)
