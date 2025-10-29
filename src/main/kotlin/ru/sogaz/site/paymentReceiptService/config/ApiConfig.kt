@@ -95,6 +95,7 @@ class ApiConfig(
             paymentDocumentMapper,
             paymentItemMapper,
             paymentReceiptMapper,
+            objectsMapper(),
         )
 
     @Bean
