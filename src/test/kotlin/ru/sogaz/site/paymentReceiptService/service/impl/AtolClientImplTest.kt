@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentReceiptService.service.impl
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -43,6 +44,9 @@ class AtolClientImplTest {
 
     @Mock
     lateinit var cacheManager: CacheManager
+
+    @Mock
+    lateinit var objectMapper: ObjectMapper
 
     @Mock
     lateinit var cache: Cache

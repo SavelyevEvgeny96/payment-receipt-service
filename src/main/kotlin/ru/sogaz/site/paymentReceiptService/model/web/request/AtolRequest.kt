@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentReceiptService.model.web.request
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class AtolRequest(
@@ -20,6 +21,7 @@ data class AtolRequest(
         @JsonProperty("total") val total: Double,
     )
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     data class AtolClientData(
         @JsonProperty("email") val email: String,
         @JsonProperty("phone") val phone: String?,

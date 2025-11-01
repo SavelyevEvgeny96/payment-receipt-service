@@ -81,6 +81,7 @@ class ApiConfig(
             restTemplate(),
             cacheManager,
             configurationDataProperties,
+            objectsMapper(),
         )
 
     @Bean
@@ -94,6 +95,7 @@ class ApiConfig(
             paymentDocumentMapper,
             paymentItemMapper,
             paymentReceiptMapper,
+            objectsMapper(),
         )
 
     @Bean
