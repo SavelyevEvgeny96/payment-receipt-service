@@ -76,6 +76,9 @@ class AtolClientImpl(
 
             log.info("TOKEN_REQUEST_INFO:\nEntity:\n{}\nAtolUrl:\n{}", entity.toJson(), atolUrl.toJson())
 
+            log.info(objectMapper.writeValueAsString(entity))
+            log.info(objectMapper.writeValueAsString(atolUrl))
+
             val response =
                 restTemplate.postForEntity(
                     atolUrl,
