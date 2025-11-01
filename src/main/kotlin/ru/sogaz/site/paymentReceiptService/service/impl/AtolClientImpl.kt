@@ -72,13 +72,18 @@ class AtolClientImpl(
                 }
 
             val entity = HttpEntity(requestBody, headers)
+            val atolUrl = "$url/$apiVersion/$GET_TOKEN"
+
+            log.info("TOKEN_REQUEST_INFO:\nEntity:\n{}\nAtolUrl:\n{}", entity.toJson(), atolUrl.toJson())
 
             val response =
                 restTemplate.postForEntity(
-                    "$url/$apiVersion/$GET_TOKEN",
+                    atolUrl,
                     entity,
                     TokenResponse::class.java,
                 )
+
+            log.info("TOKEN_RESPONSE_INFO:\n{}", response.toJson())
 
             val newToken = response.body!!.token ?: throw BusinessException(CODE_ERROR_UNAUTHORIZED, RequestInfo.getTraceId())
             cache?.put(TOKEN, newToken)
@@ -216,4 +221,6 @@ class AtolClientImpl(
             throw BusinessException(CODE_ERROR_UPDATE_STATUS_SYSTEM_NOT_FOUND, traceId)
         }
     }
+
+    private fun Any.toJson(): String = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(this)
 }
