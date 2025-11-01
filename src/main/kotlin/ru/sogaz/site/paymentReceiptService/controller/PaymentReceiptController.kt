@@ -17,7 +17,7 @@ import ru.sogaz.site.paymentReceiptService.validation.PaymentReceiptCreateReques
 import ru.sogaz.siter.models.resonses.Response
 
 @RestController
-@RequestMapping("/paymentCheck")
+@RequestMapping("/paymentcheck")
 class PaymentReceiptController(
     private val paymentReceiptService: PaymentReceiptService,
     private val paymentReceiptCreateRequestValidation: PaymentReceiptCreateRequestValidation,
@@ -35,7 +35,7 @@ class PaymentReceiptController(
         @RequestBody request: PaymentReceiptStatusRequest,
     ): ResponseEntity<Response<PaymentReceiptStatusResponse>> = ResponseEntity.ok(paymentReceiptService.updateStatus(request))
 
-    @PatchMapping("/statusUpdate")
+    @PatchMapping("/statusupdate")
     fun getPaymentStatus(
         @RequestBody request: PaymentReceiptUpdateRequest,
     ): ResponseEntity<Response<PaymentReceiptUpdateResponse>> = ResponseEntity.ok(paymentReceiptService.getStatus(request))
