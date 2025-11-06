@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentReceiptService.scheduler
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import ru.sogaz.site.paymentReceiptService.loggerFor
@@ -8,7 +9,6 @@ import ru.sogaz.site.paymentReceiptService.properties.ConfigurationDataPropertie
 import ru.sogaz.site.paymentReceiptService.repository.PaymentDocumentRepository
 import ru.sogaz.site.paymentReceiptService.repository.reference.CheckStatusRepository
 import ru.sogaz.site.paymentReceiptService.service.PaymentReceiptService
-import java.time.LocalDateTime
 
 @Component
 class ScheduledJobService(
@@ -20,11 +20,15 @@ class ScheduledJobService(
     private val log = loggerFor(javaClass)
 
     @Scheduled(fixedDelayString = "\${scheduled.task.defaultDelay}")
+    @SchedulerLock(
+        name = "checkAtolStatuses",
+        lockAtMostFor = "PT1M",
+    )
     fun checkAtolStatuses() {
         val period = configurationDataProperties.periodStatusUpdate
         log.info("Запуск фоновой задачи проверки статусов Атола с периодом: $period секунд")
 
-        val now = LocalDateTime.now()
+        val now = java.time.LocalDateTime.now()
         val startTime = now.minusDays(32)
         val endTime = now.minusMinutes(5)
 
