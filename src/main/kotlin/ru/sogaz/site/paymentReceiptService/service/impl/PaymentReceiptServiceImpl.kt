@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentReceiptService.service.impl
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UPDATE_STATUS_ID_NOT_FOUND
@@ -49,6 +50,7 @@ class PaymentReceiptServiceImpl(
         private const val API_VERSION = "Api Version not found"
     }
 
+    @Transactional(rollbackFor = [Exception::class])
     override fun createReceipt(request: PaymentReceiptCreateRequest): Response<PaymentReceiptCreateResponse> {
         val traceId = RequestInfo.getTraceId()
 
