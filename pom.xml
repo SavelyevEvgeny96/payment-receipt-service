@@ -147,7 +147,11 @@
 			<artifactId>logback-gelf</artifactId>
 			<version>${logback-gelf.version}</version>
 		</dependency>
-
+		<dependency>
+			<groupId>ru.sogaz.site</groupId>
+			<artifactId>logging-starter</artifactId>
+			<version>1.0.2</version>
+		</dependency>
 		<!-- Swagger / OpenAPI -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
