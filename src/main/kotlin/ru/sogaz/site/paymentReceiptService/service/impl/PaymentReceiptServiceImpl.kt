@@ -27,7 +27,7 @@ import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
 import java.time.LocalDateTime
 
-class PaymentReceiptServiceImpl(
+open class PaymentReceiptServiceImpl(
     private val paymentDocumentRepository: PaymentDocumentRepository,
     private val paymentItemRepository: PaymentItemRepository,
     private val paymentReceiptRepository: PaymentReceiptRepository,

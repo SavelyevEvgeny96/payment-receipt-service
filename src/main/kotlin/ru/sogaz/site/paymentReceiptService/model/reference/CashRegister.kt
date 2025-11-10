@@ -12,8 +12,8 @@ import java.util.UUID
 @Table(name = "cash_registers")
 data class CashRegister(
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    val systemId: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.UUID)
+    val systemId: UUID? = null,
     val systemCode: String = "",
     val systemName: String = "",
     val dateCreate: LocalDateTime = LocalDateTime.now(),

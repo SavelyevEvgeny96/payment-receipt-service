@@ -12,8 +12,8 @@ import java.util.UUID
 @Table(name = "vat_types")
 data class VatType(
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    val vatTypeId: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.UUID)
+    val vatTypeId: UUID? = null,
     val vatTypeCode: String = "",
     val vatTypeName: String = "",
     val dateCreate: LocalDateTime = LocalDateTime.now(),

@@ -11,8 +11,8 @@ import java.util.UUID
 @Table(name = "check_statuses")
 data class CheckStatus(
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    val id: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.UUID)
+    val id: UUID? = null,
     val stateId: String = "",
     val stateName: String = "",
 )

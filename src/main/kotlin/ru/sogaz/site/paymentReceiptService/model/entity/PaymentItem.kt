@@ -18,8 +18,8 @@ import java.util.UUID
 @Table(name = "payment_items")
 data class PaymentItem(
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    val itemId: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.UUID)
+    val itemId: UUID? = null,
     var name: String = "",
     var price: Double = 0.0,
     var quantity: Double = 0.0,

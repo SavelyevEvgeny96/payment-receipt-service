@@ -12,8 +12,8 @@ import java.util.UUID
 @Table(name = "api_versions")
 data class ApiVersion(
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    val versionId: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.UUID)
+    val versionId: UUID? = null,
     val versionCode: String = "",
     val versionName: String = "",
     val dateCreate: LocalDateTime = LocalDateTime.now(),
