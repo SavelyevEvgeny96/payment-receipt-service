@@ -18,7 +18,7 @@ import java.util.UUID
 @Table(name = "payment_documents")
 class PaymentDocument(
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
     var docId: UUID? = null,
     var clientUserId: String? = null,
     var clientEmail: String = "",
