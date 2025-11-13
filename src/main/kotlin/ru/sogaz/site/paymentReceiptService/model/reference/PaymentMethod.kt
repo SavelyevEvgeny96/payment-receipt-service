@@ -12,8 +12,8 @@ import java.util.UUID
 @Table(name = "payment_methods")
 data class PaymentMethod(
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    val paymentMethodId: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.UUID)
+    val paymentMethodId: UUID? = null,
     val paymentMethodCode: String = "",
     val paymentMethodName: String = "",
     val dateCreate: LocalDateTime = LocalDateTime.now(),

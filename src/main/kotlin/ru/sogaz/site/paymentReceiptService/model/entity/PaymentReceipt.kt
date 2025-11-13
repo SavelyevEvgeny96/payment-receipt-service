@@ -16,8 +16,8 @@ import java.util.UUID
 @Table(name = "payment_receipts")
 data class PaymentReceipt(
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    var paymentId: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.UUID)
+    var paymentId: UUID? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "type_id")
     var paymentType: PaymentType? = null,
