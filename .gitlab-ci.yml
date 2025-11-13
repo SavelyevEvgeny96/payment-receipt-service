@@ -11,11 +11,11 @@ variables:
   # Запрос CPU (минимальное требуемое кол-во)
   RESOURCES_REQUESTS_CPU: 100m
   # Запрос памяти (минимальное требуемое кол-во)
-  RESOURCES_REQUESTS_MEMORY: 128Mi
+  RESOURCES_REQUESTS_MEMORY: 512Mi
   # Лимит CPU (максимальное требуемое кол-во)
   # # ЦПУ не лимитировано
   # Лимит памяти (максимальное требуемое кол-во). Под будет помечен для удаления при превышении!
-  RESOURCES_LIMITS_MEMORY: 384Mi
+  RESOURCES_LIMITS_MEMORY: 1024Mi
 
   # Версия Java для сборки приложения
   DOCKER_BUILD_JAVA_VERSION: 21 # 6/7/8/9/10/11/17/21
