@@ -90,7 +90,7 @@ class AtolClientImpl(
 
             return newToken
         } catch (e: Exception) {
-            log.error(e, e.message)
+            log.error(e.message, e)
             throw BusinessException(CODE_ERROR_UNAUTHORIZED, RequestInfo.getTraceId())
         }
     }

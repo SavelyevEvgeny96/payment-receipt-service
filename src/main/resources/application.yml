@@ -59,6 +59,19 @@ logging:
       sogaz:
         site:
           pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:DEBUG}
+  proxy:
+    frontend-enabled: ${LOGGING_PROXY_FRONTEND_ENABLED:true}
+    upstream-enabled: ${LOGGING_PROXY_UPSTREAM_ENABLED:true}
+    max-body-bytes: ${LOGGING_PROXY_MAX_BODY_BYTES:6000}
+    log-headers: ${LOGGING_PROXY_LOG_HEADERS:false}
+    stacktrace-enabled: ${LOGGING_PROXY_STACKTRACE_ENABLE:false}
+    sensitive-fields: ${LOGGING_SENSITIVE_FIELDS}
+
+  rabbit:
+    enabled: ${LOGGING_RABBIT_ENABLED:true}
+    log-body: ${LOGGING_RABBIT_LOG_BODY:true}
+    confirms-enabled: ${LOGGING_RABBIT_CONFIRMS_ENABLED:true}
+    returns-enabled: ${LOGGING_RABBIT_RETURNS_ENABLED:true}
 
 logstash:
   host: ${LOG_SERVER_HOST:log.sogaz.ru}
