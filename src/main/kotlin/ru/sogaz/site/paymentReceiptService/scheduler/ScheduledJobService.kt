@@ -46,7 +46,7 @@ class ScheduledJobService(
             try {
                 paymentDocumentRepository.findByStatusAndDateSendBetween(statuses, startTime, endTime)
             } catch (ex: Exception) {
-                log.error(ex, "Ошибка при получении документов из БД")
+                log.error("Ошибка при получении документов из БД", ex)
                 return
             }
 
@@ -66,7 +66,7 @@ class ScheduledJobService(
                 log.info("Обновление статуса для externalId=$externalId")
                 paymentReceiptService.getStatus(PaymentReceiptUpdateRequest(externalId))
             } catch (e: Exception) {
-                log.error(e, "Ошибка обновления статуса для externalId=${document.externalId}")
+                log.error("Ошибка обновления статуса для externalId=${document.externalId}", e)
             }
         }
     }
