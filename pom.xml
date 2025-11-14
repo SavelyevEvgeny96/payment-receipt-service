@@ -27,7 +27,7 @@
 
 		<ru.sogaz.esb.core.logger.version>3.0.0</ru.sogaz.esb.core.logger.version>
 		<logback-gelf.version>6.1.1</logback-gelf.version>
-		<springdoc-openapi-starter.version>2.2.0</springdoc-openapi-starter.version>
+		<springdoc-openapi-starter.version>2.7.0</springdoc-openapi-starter.version>
 		<maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
 		<spring-boot-maven-plugin.version>3.1.4</spring-boot-maven-plugin.version>
 		<maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
