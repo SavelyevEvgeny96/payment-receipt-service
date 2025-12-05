@@ -1,0 +1,27 @@
+sequenceDiagram
+    participant Rabbit
+    participant ReceiptService
+    participant Database
+
+    Rabbit ->>+ ReceiptService: Запрос <br/>на отправку чека<br/> из очереди<br/> receipt.requested.queue
+    ReceiptService ->> ReceiptService: Валидация запроса
+
+    break Ошибка валидации
+        ReceiptService -->> Rabbit: receipt.sent with error info
+        ReceiptService -->> Rabbit: Ack
+    end
+
+    ReceiptService ->>+ Database: Поиск существующего документа по заказу
+    Database -->>- ReceiptService: Возврат записи
+
+    break Запись существует
+        alt Если статус success
+            ReceiptService -->> Rabbit: receipt.sent success
+        end
+        ReceiptService -->> Rabbit: Ack
+    end
+
+    ReceiptService ->>+ Database: Сохранение нового документа по заказу<br/> в статусе new
+    Database -->>- ReceiptService: Подтверждение изменений
+    ReceiptService -->> Rabbit: receipt.created.queue<br/> PaymentDocument
+    ReceiptService -->>- Rabbit: Ack

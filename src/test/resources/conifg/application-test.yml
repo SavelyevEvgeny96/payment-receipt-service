@@ -1,0 +1,20 @@
+config:
+  atol:
+    api:
+      basePath: http://localhost:3000
+      groupCode: v4-online-atol-ru_4179
+      tokenTTL: 3
+    credentials:
+      login: v4-online-atol-ru
+      pass: iGFFuihss
+    company:
+      email: Diop.Sheykh@sogaz.ru
+      inn: 5544332219
+      paymentAddress: https://your-payment.url
+    callback:
+      url: http://localhost:8080/paymentcheck/status
+  feign:
+    retryer:
+      maxRetries: 6
+      minTimeoutMs: 10000
+      maxTimeoutMs: 600000

@@ -1,32 +1,32 @@
 package ru.sogaz.site.paymentReceiptService.config
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cache.caffeine.CaffeineCacheManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import ru.sogaz.site.paymentReceiptService.properties.ConfigurationDataProperties
+import org.springframework.context.annotation.Primary
 import java.util.concurrent.TimeUnit
 
-@Configuration
 @EnableCaching
-class CacheConfig(
-    private val configurationDataProperties: ConfigurationDataProperties,
-) {
+@Configuration
+class CacheConfig {
     companion object {
-        private const val ATOL_TOKEN = "atolToken"
+        const val ATOL_TOKEN_CACHE = "atolToken"
     }
+
+    @Value("\${config.atol.api.tokenTTL}")
+    lateinit var tokenTTL: String
 
     @Bean
-    fun cacheManager(): CaffeineCacheManager {
-        val tokenTTL = configurationDataProperties.tokenTime.toLong()
+    @Primary
+    fun tokenTTLCacheManager(): CaffeineCacheManager =
+        CaffeineCacheManager(ATOL_TOKEN_CACHE)
+            .apply { setCaffeine(buildCaffeineCache()) }
 
-        val caffeineCacheManager = CaffeineCacheManager(ATOL_TOKEN)
-        caffeineCacheManager.setCaffeine(
-            Caffeine
-                .newBuilder()
-                .expireAfterWrite(tokenTTL, TimeUnit.MINUTES),
-        )
-        return caffeineCacheManager
-    }
+    private fun buildCaffeineCache() =
+        Caffeine
+            .newBuilder()
+            .expireAfterWrite(tokenTTL.toLong(), TimeUnit.MINUTES)
 }

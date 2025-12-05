@@ -20,7 +20,7 @@
 	<properties>
 		<java.version>21</java.version>
 		<kotlin.version>1.9.25</kotlin.version>
-		<spring-cloud.version>2024.0.0</spring-cloud.version>
+		<spring-cloud.version>2025.0.0</spring-cloud.version>
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -55,10 +55,52 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
 		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-contract-wiremock</artifactId>
+        </dependency>
+
+        <!-- Internal Libraries -->
+        <dependency>
+            <groupId>ru.sogaz.site</groupId>
+            <artifactId>exception-starter</artifactId>
+            <version>1.0.105</version>
+        </dependency>
+        <dependency>
+            <groupId>ru.sogaz.site</groupId>
+            <artifactId>filter-starter</artifactId>
+            <version>1.0.4</version>
+        </dependency>
+        <dependency>
+            <groupId>ru.sogaz.site</groupId>
+            <artifactId>logging-starter</artifactId>
+            <version>1.0.3</version>
+        </dependency>
 
 		<!-- Kotlin -->
 		<dependency>
@@ -75,6 +117,12 @@
 			<version>${kotlin.version}</version>
 		</dependency>
 
+        <!-- Open feign -->
+        <dependency>
+            <groupId>io.github.openfeign</groupId>
+            <artifactId>feign-okhttp</artifactId>
+        </dependency>
+
 		<!-- Работа с БД -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
@@ -86,11 +134,8 @@
 			<artifactId>liquibase-core</artifactId>
 			<version>4.24.0</version>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
-		<!--ShedLock -->
+
+        <!--ShedLock -->
 		<dependency>
 			<groupId>net.javacrumbs.shedlock</groupId>
 			<artifactId>shedlock-spring</artifactId>
@@ -112,40 +157,15 @@
 		<dependency>
 			<groupId>com.github.ben-manes.caffeine</groupId>
 			<artifactId>caffeine</artifactId>
-			<version>3.1.8</version>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-cache</artifactId>
 		</dependency>
 
-		<!-- Internal Libraries -->
-		<dependency>
-			<groupId>ru.sogaz.site</groupId>
-			<artifactId>exception-starter</artifactId>
-			<version>1.0.105</version>
-		</dependency>
-		<dependency>
-			<groupId>ru.sogaz.site</groupId>
-			<artifactId>models-lib</artifactId>
-			<version>1.0.4</version>
-		</dependency>
-		<dependency>
-			<groupId>ru.sogaz.site</groupId>
-			<artifactId>filter-starter</artifactId>
-			<version>1.0.4</version>
-		</dependency>
-
+        <!-- Логирование -->
 		<dependency>
 			<groupId>de.siegmar</groupId>
 			<artifactId>logback-gelf</artifactId>
 			<version>${logback-gelf.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>ru.sogaz.site</groupId>
-			<artifactId>logging-starter</artifactId>
-			<version>1.0.4-dev</version>
-		</dependency>
+
 		<!-- Swagger / OpenAPI -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
@@ -166,24 +186,40 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- AutoService -->
-		<dependency>
-			<groupId>com.google.auto.service</groupId>
-			<artifactId>auto-service</artifactId>
-			<version>1.1.1</version>
-		</dependency>
-
 		<!-- Тестирование -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.jetbrains.kotlin</groupId>
-			<artifactId>kotlin-test-junit5</artifactId>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-test-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito.kotlin</groupId>
+            <artifactId>mockito-kotlin</artifactId>
+            <version>5.2.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.mockk</groupId>
+            <artifactId>mockk-jvm</artifactId>
+            <version>1.13.13</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.marcinziolo</groupId>
+            <artifactId>kotlin-wiremock</artifactId>
+            <version>2.1.1</version>
+            <scope>test</scope>
+        </dependency>
 	</dependencies>
 
 	<build>
@@ -211,17 +247,30 @@
 				<artifactId>kotlin-maven-plugin</artifactId>
 				<version>${kotlin.version}</version>
 				<executions>
-					<execution>
+                    <execution>
+                        <id>kapt</id>
+                        <goals>
+                            <goal>kapt</goal>
+                        </goals>
+                        <configuration>
+                            <annotationProcessorPaths>
+                                <annotationProcessorPath>
+                                    <groupId>org.mapstruct</groupId>-->
+                                    <artifactId>mapstruct-processor</artifactId>
+                                    <version>${mapstruct.version}</version>
+                                </annotationProcessorPath>
+                            </annotationProcessorPaths>
+                            <annotationProcessorArgs>
+                                <annotationProcessorArg>mapstruct.defaultComponentModel=spring</annotationProcessorArg>
+                            </annotationProcessorArgs>
+                        </configuration>
+                    </execution>
+
+                    <execution>
 						<id>compile</id>
 						<phase>process-sources</phase>
 						<goals>
 							<goal>compile</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>kapt</id>
-						<goals>
-							<goal>kapt</goal>
 						</goals>
 					</execution>
 				</executions>
