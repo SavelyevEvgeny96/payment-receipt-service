@@ -1,23 +1,19 @@
 package ru.sogaz.site.paymentReceiptService
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
-import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
+import org.springframework.cloud.openfeign.EnableFeignClients
 import org.springframework.scheduling.annotation.EnableScheduling
-import ru.sogaz.site.paymentReceiptService.properties.AppInfoProperties
-import ru.sogaz.site.paymentReceiptService.properties.ConfigurationDataProperties
 
 @EnableScheduling
 @SpringBootApplication
-@ConfigurationPropertiesScan("ru.sogaz.site.payment-receipt-service.properties")
-@EnableConfigurationProperties(AppInfoProperties::class, ConfigurationDataProperties::class)
+@EnableFeignClients(basePackages = ["ru.sogaz.site.paymentReceiptService.clients"])
+@ConfigurationPropertiesScan("ru.sogaz.site.paymentReceiptService.properties")
 open class KotlinTemplateApplication
 
 fun main(args: Array<String>) {
     runApplication<KotlinTemplateApplication>(*args)
 }
 
-fun <T> loggerFor(clazz: Class<T>): Logger = LoggerFactory.getLogger(clazz)
+inline fun <reified T> T?.orThrow(block: () -> Exception): T = this ?: throw block()

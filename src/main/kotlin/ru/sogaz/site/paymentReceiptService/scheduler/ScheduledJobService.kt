@@ -3,71 +3,67 @@ package ru.sogaz.site.paymentReceiptService.scheduler
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import ru.sogaz.site.paymentReceiptService.loggerFor
-import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptUpdateRequest
-import ru.sogaz.site.paymentReceiptService.properties.ConfigurationDataProperties
-import ru.sogaz.site.paymentReceiptService.repository.PaymentDocumentRepository
-import ru.sogaz.site.paymentReceiptService.repository.reference.CheckStatusRepository
-import ru.sogaz.site.paymentReceiptService.service.PaymentReceiptService
+import ru.sogaz.site.exceptionStarter.starter.config.loggerFor
+import ru.sogaz.site.paymentReceiptService.dao.ReceiptDao
+import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
+import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
+import ru.sogaz.site.paymentReceiptService.producer.ReceiptEventsProducer
+import ru.sogaz.site.paymentReceiptService.service.ReceiptStatusService
+import java.time.LocalDateTime
 
 @Component
 class ScheduledJobService(
-    private val configurationDataProperties: ConfigurationDataProperties,
-    private val paymentDocumentRepository: PaymentDocumentRepository,
-    private val paymentReceiptService: PaymentReceiptService,
-    private val checkStatusRepository: CheckStatusRepository,
+    private val receiptDao: ReceiptDao,
+    private val receiptStatusService: ReceiptStatusService,
+    private val receiptEventsProducer: ReceiptEventsProducer,
 ) {
+    companion object {
+        private const val OLDEST_RECEIPTS_DAYS: Long = 32
+        private const val NEWEST_RECEIPTS_MINUTES: Long = 5
+
+        private const val NOT_FOUND_STATUSES_EXCEPTION_MESSAGE = "Не найдены статусы 'new' или 'wait'"
+    }
+
     private val log = loggerFor(javaClass)
 
-    @Scheduled(fixedDelayString = "\${scheduled.task.defaultDelay}")
+    @Scheduled(cron = "\${scheduled.task.cron}")
     @SchedulerLock(
         name = "checkAtolStatuses",
-        lockAtMostFor = "PT1M",
+        lockAtLeastFor = "PT30S",
     )
-    fun checkAtolStatuses() {
-        val period = configurationDataProperties.periodStatusUpdate
-        log.info("Запуск фоновой задачи проверки статусов Атола с периодом: $period секунд")
+    fun checkAtolStatuses() =
+        findDocumentForUpdateStatus()
+            .mapNotNull(::updateStatusForPaymentDocument)
+            .filter(::receiptHasDoneStatus)
+            .forEach(receiptEventsProducer::receiptSentEvent)
 
-        val now = java.time.LocalDateTime.now()
-        val startTime = now.minusDays(32)
-        val endTime = now.minusMinutes(5)
+    private fun findDocumentForUpdateStatus(): List<Receipt> =
+        try {
+            val now = LocalDateTime.now()
+            val startTime = now.minusDays(OLDEST_RECEIPTS_DAYS)
+            val endTime = now.minusMinutes(NEWEST_RECEIPTS_MINUTES)
 
-        val newStatus = checkStatusRepository.findByStateId("new")
-        val waitStatus = checkStatusRepository.findByStateId("wait")
-
-        if (newStatus == null || waitStatus == null) {
-            log.warn("Не найдены статусы 'new' или 'wait' — задача пропущена")
-            return
+            receiptDao.findByStatusAndDateSendBetween(ReceiptState.WAIT, startTime, endTime)
+        } catch (ex: Exception) {
+            log.error("Ошибка при получении документов из БД", ex)
+            emptyList()
         }
 
-        val statuses = listOf(newStatus, waitStatus)
-
-        val documents =
-            try {
-                paymentDocumentRepository.findByStatusAndDateSendBetween(statuses, startTime, endTime)
-            } catch (ex: Exception) {
-                log.error("Ошибка при получении документов из БД", ex)
-                return
+    private fun updateStatusForPaymentDocument(document: Receipt): Receipt? {
+        try {
+            val externalId = document.externalId
+            if (externalId == null) {
+                log.warn("Документ с id=${document.id} не содержит externalId — пропущен")
+                return null
             }
 
-        if (documents.isEmpty()) {
-            log.info("Нет документов для обновления статуса")
-            return
-        }
-
-        documents.forEach { document ->
-            try {
-                val externalId = document.externalId
-                if (externalId == null) {
-                    log.warn("Документ с id=${document.docId} не содержит externalId — пропущен")
-                    return@forEach
-                }
-
-                log.info("Обновление статуса для externalId=$externalId")
-                paymentReceiptService.getStatus(PaymentReceiptUpdateRequest(externalId))
-            } catch (e: Exception) {
-                log.error("Ошибка обновления статуса для externalId=${document.externalId}", e)
-            }
+            log.debug("Обновление статуса для externalId=$externalId")
+            return receiptStatusService.updateStatusFromAtol(document)
+        } catch (ex: Exception) {
+            log.error("Ошибка обновления статуса для externalId=${document.externalId}", ex)
+            return null
         }
     }
+
+    private fun receiptHasDoneStatus(receipt: Receipt): Boolean = receipt.state == ReceiptState.DONE
 }

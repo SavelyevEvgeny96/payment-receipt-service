@@ -1,0 +1,80 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: nexus.sogaz.ru/postgres:16
+    container_name: receipt_service_postgres
+    environment:
+      POSTGRES_DB: receipt_service_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5430:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+#    command: ["postgres", "-c", "log_statement=all"] # Для включения подробных логов postgres
+    networks:
+      - receipt-network
+
+  rabbitmq:
+    image: nexus.sogaz.ru/rabbitmq:3.13-management
+    container_name: receipt-rabbitmq
+    ports:
+      - "5672:5672"     # AMQP для приложения
+      - "15672:15672"   # Web UI
+    environment:
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: >
+        -rabbitmq_management load_definitions "/etc/rabbitmq/definitions.json"
+    volumes:
+      - ./mocks/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - receipt-network
+
+  atol-mock:
+    image: nexus.sogaz.ru/wiremock/wiremock:3.13.2
+    container_name: atol-mock
+    ports:
+      - "8081:8081"
+    command: [ "--verbose","--port","8081","--root-dir","/home/wiremock", "--global-response-templating" ]
+    volumes:
+      - ./mocks/atol:/home/wiremock
+    restart: unless-stopped
+    networks:
+      - receipt-network
+
+  receipt-service:
+    # Сначала пробуем загрузить образ
+    image: receipt-service-local
+    # А если его нет, то создаем из Dockerfile из той же директории
+    build: .
+    # Подтягиваем переменные окружения из .env, если такой есть в той же директории
+    env_file:
+      - .env
+    # Вручную переопределяем по необходимости
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/receipt_service_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: pass
+      SPRING_PROFILES_ACTIVE: local
+      RABBITMQ_HOST: rabbitmq
+      ATOL_URL: http://atol-mock:8081/possystem
+    deploy:
+      # Указываем запуск с возможностью репликации
+      mode: replicated
+      # После успешного запуска одного экземпляра можем масштабировать командой: `docker-compose scale receipt-service=6`
+      replicas: 1
+    depends_on:
+      - postgres
+      - rabbitmq
+      - atol-mock
+    networks:
+      - receipt-network
+
+networks:
+  receipt-network:
+
+volumes:
+  pgdata:
+  rabbitmq-data:

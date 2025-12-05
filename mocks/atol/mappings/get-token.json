@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/possystem/v4/getToken",
+    "headers": {
+      "Content-Type": {
+        "matches": "application/json.*"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "delayDistribution": {
+      "type": "uniform",
+      "lower": 150,
+      "upper": 2500
+    },
+    "jsonBody": {
+      "error": null,
+      "token": "{{randomValue length=33 type='ALPHANUMERIC'}}",
+      "timestamp": "{{now}}"
+    }
+  }
+}

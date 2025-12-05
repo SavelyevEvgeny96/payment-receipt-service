@@ -1,0 +1,5 @@
+{
+  "error": null,
+  "token": "{{randomValue length=33 type='ALPHANUMERIC'}}",
+  "timestamp": "{{now}}"
+}
