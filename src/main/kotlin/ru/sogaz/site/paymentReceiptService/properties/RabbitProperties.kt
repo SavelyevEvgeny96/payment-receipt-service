@@ -9,6 +9,8 @@ class RabbitProperties {
     lateinit var receiptRequestedRoutingKey: String
     lateinit var receiptRequestedQueue: String
     lateinit var receiptRequestedQueueDlq: String
+    lateinit var receiptRequestedRoutingKeyDlq: String
+    lateinit var receiptCreatedQueue: String
     lateinit var receiptCreatedRoutingKey: String
     lateinit var receiptSentRoutingKey: String
     lateinit var receiptSentQueue: String

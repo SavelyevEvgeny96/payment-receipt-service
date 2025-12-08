@@ -7,7 +7,6 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
-import org.springframework.boot.context.properties.bind.Binder
 import org.springframework.boot.test.util.TestPropertyValues
 import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ConfigurableApplicationContext
@@ -25,27 +24,27 @@ import java.net.ServerSocket
 @ComponentScan("ru.sogaz.site.paymentReceiptService.service.atol", "ru.sogaz.site.paymentReceiptService.mapper.atol")
 @ContextConfiguration(
     initializers = [AtolTests.Companion.Initializer::class],
-    classes = [AtolProperties::class]
+    classes = [AtolProperties::class],
 )
 abstract class AtolTests {
     companion object {
-
         private val port = ServerSocket(0).localPort
 
         @RegisterExtension
         @JvmStatic
         private val wireMockExtension =
-            WireMockExtension.newInstance()
+            WireMockExtension
+                .newInstance()
                 .options(wireMockConfig().port(port))
                 .build()
 
         class Initializer : ApplicationContextInitializer<ConfigurableApplicationContext> {
             override fun initialize(configurableApplicationContext: ConfigurableApplicationContext) {
-                TestPropertyValues.of(
-                    "wiremock.server.port=$port",
-                ).applyTo(configurableApplicationContext.environment)
+                TestPropertyValues
+                    .of(
+                        "wiremock.server.port=$port",
+                    ).applyTo(configurableApplicationContext.environment)
             }
         }
     }
-
 }

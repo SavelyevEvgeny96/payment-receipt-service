@@ -18,7 +18,7 @@ services:
       - receipt-network
 
   rabbitmq:
-    image: nexus.sogaz.ru/rabbitmq:3.13-management
+    image: nexus.sogaz.ru/rabbitmq:4.1-management
     container_name: receipt-rabbitmq
     ports:
       - "5672:5672"     # AMQP для приложения
@@ -51,7 +51,7 @@ services:
     build: .
     # Подтягиваем переменные окружения из .env, если такой есть в той же директории
     env_file:
-      - .env
+      - .dev.env
     # Вручную переопределяем по необходимости
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/receipt_service_db

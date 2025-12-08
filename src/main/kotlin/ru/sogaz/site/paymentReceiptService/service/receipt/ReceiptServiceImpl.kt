@@ -1,8 +1,7 @@
 package ru.sogaz.site.paymentReceiptService.service.receipt
 
-import jakarta.transaction.Transactional
-import org.hibernate.exception.ConstraintViolationException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.paymentReceiptService.dao.ReceiptDao
 import ru.sogaz.site.paymentReceiptService.mapper.receipt.ReceiptMapper
 import ru.sogaz.site.paymentReceiptService.mapper.web.ResponseMapper
@@ -27,14 +26,14 @@ class ReceiptServiceImpl(
         private const val RECEIPT_NOT_FOUND_EXCEPTION_MESSAGE = "Не удалось найти чек на отправку по id [%s]"
     }
 
-    @Transactional(rollbackOn = [ConstraintViolationException::class])
+    @Transactional(rollbackFor = [Exception::class])
     override fun createReceipt(receipt: Receipt): PaymentReceiptCreateResponse =
         receipt
             .run(receiptDao::save)
             .also(receiptEventsProducer::receiptCreatedEvent)
             .run(responseMapper::toCreateResponse)
 
-    @Transactional(rollbackOn = [Exception::class])
+    @Transactional(rollbackFor = [Exception::class])
     override fun sendReceipt(receiptCreatedEvent: ReceiptCreatedEvent): Receipt =
         receiptCreatedEvent.id
             .run(receiptDao::findById)

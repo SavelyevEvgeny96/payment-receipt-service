@@ -2,11 +2,10 @@ package ru.sogaz.site.paymentReceiptService.config
 
 import feign.Client
 import feign.Retryer
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import ru.sogaz.site.loggingStarter.interceptor.OkHttpLoggingInterceptor
-import ru.sogaz.site.loggingStarter.properties.LoggingProperties
 import ru.sogaz.site.paymentReceiptService.properties.FeignClientRetryerProperties
 import java.util.concurrent.TimeUnit
 
@@ -15,13 +14,10 @@ class FeignClientConfig(
     private val retryerProperties: FeignClientRetryerProperties,
 ) {
     @Bean
-    fun okHttpLoggingInterceptor(loggingProperties: LoggingProperties) = OkHttpLoggingInterceptor(loggingProperties)
-
-    @Bean
-    fun okHttpClient(okHttpLoggingInterceptor: OkHttpLoggingInterceptor): OkHttpClient =
+    fun okHttpClient(loggingInterceptor: Interceptor): OkHttpClient =
         OkHttpClient
             .Builder()
-            .addInterceptor(okHttpLoggingInterceptor)
+            .addInterceptor(loggingInterceptor)
             .connectTimeout(3, TimeUnit.SECONDS)
             .readTimeout(5, TimeUnit.SECONDS)
             .writeTimeout(3, TimeUnit.SECONDS)

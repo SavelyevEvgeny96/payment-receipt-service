@@ -10,7 +10,9 @@ interface ReceiptDao {
     @Transactional(rollbackFor = [Exception::class])
     fun save(receipt: Receipt): Receipt
 
-    fun findById(docId: UUID): Receipt?
+    fun findById(id: UUID): Receipt?
+
+    fun findByOrderId(orderId: UUID): Receipt?
 
     fun findByExternalId(externalId: UUID): Receipt?
 

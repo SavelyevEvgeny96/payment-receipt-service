@@ -14,6 +14,9 @@ interface ReceiptRepository : JpaRepository<Receipt, UUID> {
     override fun findById(docId: UUID): Optional<Receipt>
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    fun findByOrderId(orderId: UUID): Receipt?
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     fun findByExternalId(externalId: UUID): Receipt?
 
     fun findByStateAndDateSendBetween(

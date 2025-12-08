@@ -13,10 +13,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.ComponentScan
-import org.springframework.context.annotation.Import
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
-import ru.sogaz.site.paymentReceiptService.clients.AtolClient
 import ru.sogaz.site.paymentReceiptService.model.web.response.atol.TokenResponse
 import ru.sogaz.site.paymentReceiptService.properties.AtolProperties
 import ru.sogaz.site.paymentReceiptService.service.AtolAuthService
@@ -43,7 +40,6 @@ class AtolAuthServiceTest : AtolTests() {
 
     @BeforeAll
     fun beforeAll() {
-
         validTokenResponse = TokenResponse(VALID_TOKEN).run(objectMapper::writeValueAsString)
         emptyTokenResponse = TokenResponse("").run(objectMapper::writeValueAsString)
     }

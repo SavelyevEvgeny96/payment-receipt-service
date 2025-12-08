@@ -7,7 +7,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients
 import org.springframework.cloud.openfeign.FeignAutoConfiguration
 import org.springframework.context.annotation.Import
 
-
 @Import(
     value = [
         FeignAutoConfiguration::class,

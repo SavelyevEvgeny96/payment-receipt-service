@@ -109,6 +109,7 @@ config:
     receiptRequestedRoutingKey: ${RECEIPT_REQUESTED_ROUTING_KEY:receipt.requested}
     receiptRequestedQueue: ${RECEIPT_REQUESTED_QUEUE:receipt.requested.queue}
     receiptRequestedQueueDlq: ${RECEIPT_REQUESTED_QUEUE_DLQ:receipt.requested.queue.dlq}
+    receiptRequestedRoutingKeyDlq: ${RECEIPT_REQUESTED_QUEUE_DLQ:receipt.requested.dlq}
     receiptCreatedRoutingKey: ${SEND_CHEQUE_ROUTING_KEY:receipt.created}
     receiptCreatedQueue: ${RECEIPT_CREATED_QUEUE:receipt.created.queue}
     receiptSentRoutingKey: ${SEND_CHEQUE_ROUTING_KEY:receipt.sent}

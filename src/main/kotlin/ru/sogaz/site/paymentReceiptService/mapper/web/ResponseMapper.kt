@@ -9,6 +9,7 @@ import ru.sogaz.site.paymentReceiptService.model.web.response.PaymentReceiptUpda
 
 @Mapper
 interface ResponseMapper {
+    @Mapping(target = "externalId", source = "id")
     fun toCreateResponse(receipt: Receipt): PaymentReceiptCreateResponse
 
     @Mapping(target = "stateId", source = "state.value")

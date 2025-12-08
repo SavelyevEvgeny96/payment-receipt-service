@@ -16,7 +16,6 @@ import ru.sogaz.site.paymentReceiptService.model.web.response.PaymentReceiptUpda
 import ru.sogaz.site.paymentReceiptService.orThrow
 import ru.sogaz.site.paymentReceiptService.service.AtolService
 import ru.sogaz.site.paymentReceiptService.service.ReceiptStatusService
-import java.util.UUID
 
 @Service
 class ReceiptStatusServiceImpl(
@@ -30,14 +29,16 @@ class ReceiptStatusServiceImpl(
 
     override fun setStatus(request: PaymentReceiptStatusRequest): PaymentReceiptStatusResponse =
         request.externalId
-            .run(::findPaymentDocumentOrThrow)
+            .run(receiptDao::findByExternalId)
+            .orThrow { BusinessException(CODE_ERROR_UPDATE_STATUS_ID_NOT_FOUND) }
             .apply { state = request.status }
             .run(receiptDao::save)
             .run(responseMapper::toSetStatusResponse)
 
     override fun updateStatusFromAtol(request: PaymentReceiptUpdateRequest): PaymentReceiptUpdateResponse =
-        request.externalId
-            .run(::findPaymentDocumentOrThrow)
+        request.orderId
+            .run(receiptDao::findByOrderId)
+            .orThrow { BusinessException(CODE_ERROR_UPDATE_STATUS_ID_NOT_FOUND) }
             .run(::updateStatusFromAtol)
             .run(responseMapper::toUpdateStatusResponse)
 
@@ -45,11 +46,6 @@ class ReceiptStatusServiceImpl(
         receipt
             .apply { state = getAtolReceiptStatus(this) }
             .run(receiptDao::save)
-
-    private fun findPaymentDocumentOrThrow(externalId: UUID): Receipt =
-        externalId
-            .run(receiptDao::findByExternalId)
-            ?: throw BusinessException(CODE_ERROR_UPDATE_STATUS_ID_NOT_FOUND)
 
     private fun getAtolReceiptStatus(receipt: Receipt): ReceiptState =
         receipt.externalId

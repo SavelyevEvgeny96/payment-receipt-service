@@ -15,7 +15,9 @@ class ReceiptDaoImpl(
 ) : ReceiptDao {
     override fun save(receipt: Receipt): Receipt = repository.save(receipt)
 
-    override fun findById(docId: UUID): Receipt? = repository.findById(docId).getOrNull()
+    override fun findById(id: UUID): Receipt? = repository.findById(id).getOrNull()
+
+    override fun findByOrderId(orderId: UUID): Receipt? = repository.findByOrderId(orderId)
 
     override fun findByExternalId(externalId: UUID): Receipt? = repository.findByExternalId(externalId)
 
