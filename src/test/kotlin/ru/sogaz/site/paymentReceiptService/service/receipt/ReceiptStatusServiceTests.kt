@@ -62,6 +62,8 @@ class ReceiptStatusServiceTests {
 
         every { receiptDao.findByExternalId(validExternalIdUUID) } returns receipt
         every { receiptDao.findByExternalId(invalidExternalIdUUID) } returns null
+        every { receiptDao.findByOrderId(validExternalIdUUID) } returns receipt
+        every { receiptDao.findByOrderId(invalidExternalIdUUID) } returns null
         every { receiptDao.save(any()) } returnsArgument 0
     }
 
