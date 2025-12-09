@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentReceiptService.service.receipt
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UPDATE_STATUS_ID_NOT_FOUND
@@ -18,6 +19,7 @@ import ru.sogaz.site.paymentReceiptService.service.AtolService
 import ru.sogaz.site.paymentReceiptService.service.ReceiptStatusService
 
 @Service
+@Transactional(rollbackFor = [Exception::class])
 class ReceiptStatusServiceImpl(
     private val atolService: AtolService,
     private val receiptDao: ReceiptDao,
