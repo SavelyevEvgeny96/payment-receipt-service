@@ -16,7 +16,7 @@ import kotlin.text.isNullOrBlank
 @Retention(AnnotationRetention.RUNTIME)
 @Constraint(validatedBy = [EmailValidator::class])
 annotation class Email(
-    val message: String = "invalid email",
+    val message: String = "должно иметь формат адреса электронной почты",
     val groups: Array<KClass<*>> = [],
     val payload: Array<KClass<out Payload>> = [],
 )

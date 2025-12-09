@@ -67,7 +67,7 @@ class AtolServiceTest : AtolTests() {
     private val objectMapper = ObjectMapper()
 
     @BeforeAll
-    fun beforeAll(wmRuntimeInfo: WireMockRuntimeInfo) {
+    fun beforeAll() {
         initTestProperty(atolProperties)
 
         validUUID = UUID.randomUUID()
@@ -90,11 +90,10 @@ class AtolServiceTest : AtolTests() {
 
     @Test
     fun `sendReceipt should return valid response`() {
-        wiremock
-            .post {
-                url equalTo SEND_RECEIPT_PATH
-                headers contains "token" equalTo VALID_TOKEN
-            } returnsJson {
+        wiremock.post {
+            url equalTo SEND_RECEIPT_PATH
+            headers contains "token" equalTo VALID_TOKEN
+        } returnsJson {
             body = validAtolResponseJson
         }
 
@@ -104,12 +103,12 @@ class AtolServiceTest : AtolTests() {
     }
 
     @Test
-    fun `sendReceipt should throw an error if uuid was null`() {
-        wiremock
-            .post {
-                url equalTo SEND_RECEIPT_PATH
-                headers contains "token" equalTo VALID_TOKEN
-            } returnsJson {
+    fun `sendReceipt should return fail status if atol response 400`() {
+        wiremock.post {
+            url equalTo SEND_RECEIPT_PATH
+            headers contains "token" equalTo VALID_TOKEN
+        } returnsJson {
+            statusCode = 400
             body = emptyUUIDAtolResponseJson
         }
 

@@ -15,6 +15,7 @@ import ru.sogaz.site.paymentReceiptService.service.AtolService
 import ru.sogaz.site.paymentReceiptService.service.ReceiptService
 
 @Service
+@Transactional(rollbackFor = [Exception::class])
 class ReceiptServiceImpl(
     private val atolService: AtolService,
     private val receiptDao: ReceiptDao,
@@ -26,14 +27,12 @@ class ReceiptServiceImpl(
         private const val RECEIPT_NOT_FOUND_EXCEPTION_MESSAGE = "Не удалось найти чек на отправку по id [%s]"
     }
 
-    @Transactional(rollbackFor = [Exception::class])
     override fun createReceipt(receipt: Receipt): PaymentReceiptCreateResponse =
         receipt
             .run(receiptDao::save)
             .also(receiptEventsProducer::receiptCreatedEvent)
             .run(responseMapper::toCreateResponse)
 
-    @Transactional(rollbackFor = [Exception::class])
     override fun sendReceipt(receiptCreatedEvent: ReceiptCreatedEvent): Receipt =
         receiptCreatedEvent.id
             .run(receiptDao::findById)

@@ -1,5 +1,6 @@
 package ru.sogaz.site.paymentReceiptService.service.atol
 
+import feign.FeignException
 import org.springframework.stereotype.Service
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
@@ -32,6 +33,11 @@ class AtolServiceImpl(
             atolProperties.credentials
                 .run(atolAuthService::getToken)
                 .run { atolClient.sendReceipt(this, atolRequest) }
+        } catch (ex: FeignException) {
+            when(ex.status()) {
+                400 -> AtolResponse(status = ReceiptState.FAIL.value)
+                else -> throw InnerException(getTraceId(), ex.message)
+            }
         } catch (ex: Exception) {
             throw InnerException(getTraceId(), ex.message)
         }

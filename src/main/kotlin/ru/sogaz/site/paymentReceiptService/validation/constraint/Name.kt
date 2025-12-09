@@ -16,7 +16,7 @@ import kotlin.text.isNullOrBlank
 @Retention(AnnotationRetention.RUNTIME)
 @Constraint(validatedBy = [NameValidator::class])
 annotation class Name(
-    val message: String = "invalid client name",
+    val message: String = "должно быть написано кириллицей",
     val groups: Array<KClass<*>> = [],
     val payload: Array<KClass<out Payload>> = [],
 )

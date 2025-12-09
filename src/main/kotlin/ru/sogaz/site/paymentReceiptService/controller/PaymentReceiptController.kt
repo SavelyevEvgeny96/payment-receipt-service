@@ -2,6 +2,7 @@ package ru.sogaz.site.paymentReceiptService.controller
 
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -20,6 +21,7 @@ import ru.sogaz.site.paymentReceiptService.service.ReceiptStatusService
 import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
 
+@Validated
 @RestController
 @RequestMapping("/paymentcheck")
 class PaymentReceiptController(

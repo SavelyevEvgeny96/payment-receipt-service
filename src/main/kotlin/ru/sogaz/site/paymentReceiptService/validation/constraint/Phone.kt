@@ -16,7 +16,7 @@ import kotlin.text.isNullOrBlank
 @Retention(AnnotationRetention.RUNTIME)
 @Constraint(validatedBy = [PhoneValidator::class])
 annotation class Phone(
-    val message: String = "invalid phone number",
+    val message: String = "должно иметь формат номера телефона",
     val groups: Array<KClass<*>> = [],
     val payload: Array<KClass<out Payload>> = [],
 )
