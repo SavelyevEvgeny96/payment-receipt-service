@@ -37,9 +37,6 @@ spring:
     username: ${RABBITMQ_USERNAME:dev}
     password: ${RABBITMQ_PASSWORD:dev}
     virtual-host: /
-    listener:
-      simple:
-        acknowledge-mode: auto
 
 management:
   endpoints:

@@ -9,6 +9,8 @@ import org.springframework.amqp.core.TopicExchange
 import org.springframework.amqp.rabbit.annotation.EnableRabbit
 import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory.ConfirmType.NONE
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
@@ -25,9 +27,6 @@ class RabbitConfig(
     private val rabbitProperties: RabbitProperties,
 ) {
     companion object {
-        const val QUEUE_TYPE = "x-queue-type"
-        const val QUORUM = "quorum"
-
         private const val MAX_RETRY_ATTEMPTS: Int = 100
         private const val MIN_RETRY_INTERVAL: Long = 1_000
         private const val RETRY_MULTIPLAYER: Double = 3.0
@@ -36,12 +35,16 @@ class RabbitConfig(
 
     @Bean
     fun rabbitTemplate(
-        connectionFactory: ConnectionFactory,
+        connectionFactory: CachingConnectionFactory,
         jsonConverter: MessageConverter,
     ): RabbitTemplate =
         connectionFactory
+            .apply { setPublisherConfirmType(NONE) }
             .run(::RabbitTemplate)
-            .apply { messageConverter = jsonConverter }
+            .apply {
+                messageConverter = jsonConverter
+                isChannelTransacted = true
+            }
 
     @Bean
     @Primary
@@ -130,6 +133,7 @@ class RabbitConfig(
             setConnectionFactory(connectionFactory)
             setMessageConverter(jsonConverter)
             setAdviceChain(retryInterceptor)
+            setChannelTransacted(true)
             setConcurrentConsumers(rabbitProperties.concurrency.consumers)
             setMaxConcurrentConsumers(rabbitProperties.concurrency.maxConsumers)
             setStopConsumerMinInterval(rabbitProperties.concurrency.stopConsumerMinIntervalMs)
