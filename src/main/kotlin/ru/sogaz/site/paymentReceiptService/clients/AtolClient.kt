@@ -4,6 +4,7 @@ import jakarta.validation.Valid
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.http.MediaType
 import org.springframework.validation.annotation.Validated
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -34,7 +35,7 @@ interface AtolClient {
         @RequestBody request: AtolRequest,
     ): AtolResponse
 
-    @PostMapping(value = ["/v4/\${config.atol.api.groupCode}/report/{externalId}"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @GetMapping(value = ["/v4/\${config.atol.api.groupCode}/report/{externalId}"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun getStatus(
         @RequestHeader token: String,
         @PathVariable externalId: UUID,

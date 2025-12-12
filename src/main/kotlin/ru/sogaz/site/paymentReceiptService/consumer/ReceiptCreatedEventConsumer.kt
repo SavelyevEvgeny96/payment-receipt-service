@@ -1,6 +1,8 @@
 package ru.sogaz.site.paymentReceiptService.consumer
 
+import io.github.resilience4j.retry.annotation.Retry
 import jakarta.validation.Valid
+import org.springframework.amqp.ImmediateRequeueAmqpException
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated
@@ -24,6 +26,7 @@ class ReceiptCreatedEventConsumer(
         queues = ["\${config.rabbit.receiptCreatedQueue}"],
         containerFactory = "concurrentContainerFactory",
     )
+    @Retry(name = "rabbitConsumerRetry", fallbackMethod = "requeue")
     fun onMessage(
         @Valid message: ReceiptCreatedEvent,
     ) {
@@ -33,4 +36,9 @@ class ReceiptCreatedEventConsumer(
             logger.warn(SEND_RECEIPT_ERROR_MESSAGE, ex)
         }
     }
+
+    fun requeue(
+        ignore: ReceiptCreatedEvent,
+        ex: Exception,
+    ): Unit = throw ImmediateRequeueAmqpException(ex)
 }

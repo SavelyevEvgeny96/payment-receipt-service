@@ -38,6 +38,15 @@ spring:
     password: ${RABBITMQ_PASSWORD:dev}
     virtual-host: /
 
+resilience4j:
+  retry:
+    instances:
+      rabbitConsumerRetry:
+        maxAttempts: ${RABBIT_CONSUMER_RETRY_MAX_ATTEMPTS:4}
+        waitDuration: ${RABBIT_CONSUMER_RETRY_INITIAL_WAIT_DURATIONS:10s}
+        enableExponentialBackoff: ${RABBIT_CONSUMER_RETRY_EXPONENTIAL:true}
+        exponentialBackoffMultiplier: ${RABBIT_CONSUMER_RETRY_WAIT_MULTIPLAYER:10}
+
 management:
   endpoints:
     web:
@@ -117,10 +126,10 @@ config:
       stopConsumerMinIntervalMs: ${RABBIT_CONCURRENCY_STOP_CONSUMERS_MIN_INTERVALS_MS:10000}
   feign:
     retryer:
-      maxRetries: ${ATOL_CLIENT_MAX_RETRIES:3}
+      maxRetries: ${ATOL_CLIENT_MAX_RETRIES:1}
       minTimeoutMs: ${ATOL_CLIENT_MIN_TIMEOUT_MS:250}
       maxTimeoutMs: ${ATOL_CLIENT_MAX_TIMEOUT_MS:3000}
 
 scheduled:
   task:
-    cron: ${CHECK_STATUS_CRON:*/10 * * * * *}
+    cron: ${CHECK_STATUS_CRON:0 * * * * *}

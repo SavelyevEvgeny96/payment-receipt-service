@@ -1,6 +1,6 @@
 {
   "request": {
-    "method": "POST",
+    "method": "GET",
     "urlPathPattern": "/possystem/v4/.*/report/.*",
     "headers": {
       "Content-Type": {

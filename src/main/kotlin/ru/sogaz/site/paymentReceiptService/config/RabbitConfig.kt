@@ -7,14 +7,11 @@ import org.springframework.amqp.core.Queue
 import org.springframework.amqp.core.QueueBuilder
 import org.springframework.amqp.core.TopicExchange
 import org.springframework.amqp.rabbit.annotation.EnableRabbit
-import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory.ConfirmType.NONE
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.amqp.rabbit.retry.ImmediateRequeueMessageRecoverer
-import org.springframework.amqp.rabbit.retry.RejectAndDontRequeueRecoverer
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
 import org.springframework.amqp.support.converter.MessageConverter
 import org.springframework.context.annotation.Bean
@@ -28,13 +25,6 @@ import ru.sogaz.site.paymentReceiptService.properties.RabbitProperties
 class RabbitConfig(
     private val rabbitProperties: RabbitProperties,
 ) {
-    companion object {
-        private const val MAX_RETRY_ATTEMPTS: Int = 15
-        private const val MIN_RETRY_INTERVAL: Long = 1_000
-        private const val RETRY_MULTIPLAYER: Double = 3.0
-        private const val MAX_RETRY_INTERVAL: Long = 60_000
-    }
-
     @Bean
     fun rabbitTemplate(
         connectionFactory: CachingConnectionFactory,
@@ -134,23 +124,9 @@ class RabbitConfig(
         SimpleRabbitListenerContainerFactory().apply {
             setConnectionFactory(connectionFactory)
             setMessageConverter(jsonConverter)
-            setAdviceChain(retryInterceptor)
             setChannelTransacted(true)
             setConcurrentConsumers(rabbitProperties.concurrency.consumers)
             setMaxConcurrentConsumers(rabbitProperties.concurrency.maxConsumers)
             setStopConsumerMinInterval(rabbitProperties.concurrency.stopConsumerMinIntervalMs)
         }
-
-    @Bean
-    fun retryInterceptor(): RetryOperationsInterceptor =
-        RetryInterceptorBuilder
-            .stateless()
-            .maxAttempts(MAX_RETRY_ATTEMPTS)
-            .backOffOptions(
-                MIN_RETRY_INTERVAL,
-                RETRY_MULTIPLAYER,
-                MAX_RETRY_INTERVAL,
-            )
-            .recoverer(ImmediateRequeueMessageRecoverer())
-            .build()
 }
