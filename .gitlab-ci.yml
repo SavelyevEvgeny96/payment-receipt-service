@@ -28,8 +28,8 @@ variables:
   JAVA_OPTS_PROD: '-Dspring.profiles.active=prod'
 
   # Пути actuator'а для проверки - только для k8s
-  K8S_LIVENESS_PROBE: '/actuator/health/liveness'
-  K8S_READINESS_PROBE: '/actuator/health/readiness'
+  K8S_LIVENESS_PROBE: '/actuator/health'
+  K8S_READINESS_PROBE: '/actuator/health'
 
   # Исключить сервис из автоматического логирования
   EXCLUDE_FROM_LOGGING: 'false' # false/true
