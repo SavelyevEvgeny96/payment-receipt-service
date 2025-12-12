@@ -4,8 +4,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.butIf
 import org.mapstruct.Context
 import org.mapstruct.Mapper
 import org.mapstruct.MappingConstants
+import ru.sogaz.site.paymentReceiptService.model.atol.request.AtolCompanyData
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
-import ru.sogaz.site.paymentReceiptService.model.web.request.atol.AtolCompanyData
 import ru.sogaz.site.paymentReceiptService.properties.AtolProperties
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)

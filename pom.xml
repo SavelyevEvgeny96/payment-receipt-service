@@ -103,7 +103,7 @@
         <dependency>
             <groupId>ru.sogaz.site</groupId>
             <artifactId>logging-starter</artifactId>
-            <version>1.0.5-dev</version>
+            <version>1.0.11-dev</version>
         </dependency>
 
 		<!-- Kotlin -->
@@ -223,6 +223,11 @@
             <artifactId>kotlin-wiremock</artifactId>
             <version>2.1.1</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>uk.org.webcompere</groupId>
+            <artifactId>system-stubs-jupiter</artifactId>
+            <version>2.1.8</version>
         </dependency>
 	</dependencies>
 

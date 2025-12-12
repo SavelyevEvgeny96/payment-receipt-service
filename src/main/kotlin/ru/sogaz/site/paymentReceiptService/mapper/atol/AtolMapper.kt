@@ -6,10 +6,10 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.MappingConstants
 import org.mapstruct.MappingTarget
+import ru.sogaz.site.paymentReceiptService.model.atol.request.AtolRequest
+import ru.sogaz.site.paymentReceiptService.model.atol.request.AtolTokenRequest
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
-import ru.sogaz.site.paymentReceiptService.model.reference.AtolCredentials
-import ru.sogaz.site.paymentReceiptService.model.web.request.atol.AtolRequest
-import ru.sogaz.site.paymentReceiptService.model.web.request.atol.AtolTokenRequest
+import ru.sogaz.site.paymentReceiptService.model.reference.Credentials
 import ru.sogaz.site.paymentReceiptService.properties.AtolProperties
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -20,7 +20,7 @@ import java.time.format.DateTimeFormatter
     uses = [AtolReceiptMapper::class],
 )
 abstract class AtolMapper {
-    abstract fun toTokenRequest(atolCredentials: AtolCredentials): AtolTokenRequest
+    abstract fun toTokenRequest(credentials: Credentials): AtolTokenRequest
 
     @Mapping(target = "externalId", source = "receipt.id")
     @Mapping(target = "service", expression = "java( atolProperties.getCallback() )")

@@ -13,6 +13,7 @@ import ru.sogaz.site.paymentReceiptService.model.enums.PaymentMethod
 import ru.sogaz.site.paymentReceiptService.model.enums.PaymentType
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptSystem
 import ru.sogaz.site.paymentReceiptService.model.enums.VatType
+import ru.sogaz.site.paymentReceiptService.model.event.MessageMetaInfo
 import ru.sogaz.site.paymentReceiptService.validation.constraint.Name
 import ru.sogaz.site.paymentReceiptService.validation.constraint.PatternCurrency
 import ru.sogaz.site.paymentReceiptService.validation.constraint.PatternQuantity
@@ -21,9 +22,12 @@ import java.math.BigDecimal
 import java.util.UUID
 
 data class PaymentReceiptCreateRequest(
+    val messageMetaInfo: MessageMetaInfo?,
     @get:Valid
     val client: ClientInfo,
     val orderId: UUID,
+    val product: String?,
+    val channel: String?,
     @field:NotEmpty
     @get:Valid
     val items: List<PaymentItemRequest> = emptyList(),

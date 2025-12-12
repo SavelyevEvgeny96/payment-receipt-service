@@ -8,6 +8,7 @@ import com.marcinziolo.kotlin.wiremock.equalTo
 import com.marcinziolo.kotlin.wiremock.post
 import com.marcinziolo.kotlin.wiremock.returnsJson
 import com.marcinziolo.kotlin.wiremock.verify
+import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -16,15 +17,15 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.paymentReceiptService.model.atol.response.AtolResponse
+import ru.sogaz.site.paymentReceiptService.model.atol.response.TokenResponse
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
-import ru.sogaz.site.paymentReceiptService.model.reference.AtolCredentials
 import ru.sogaz.site.paymentReceiptService.model.reference.CompanyData
+import ru.sogaz.site.paymentReceiptService.model.reference.Credentials
 import ru.sogaz.site.paymentReceiptService.model.reference.ServiceData
-import ru.sogaz.site.paymentReceiptService.model.web.response.atol.AtolResponse
-import ru.sogaz.site.paymentReceiptService.model.web.response.atol.TokenResponse
 import ru.sogaz.site.paymentReceiptService.properties.AtolProperties
-import ru.sogaz.site.paymentReceiptService.service.AtolService
+import ru.sogaz.site.paymentReceiptService.service.atol.AtolService
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -40,7 +41,7 @@ class AtolServiceTest : AtolTests() {
         private const val DONE_STATUS_RESPONSE = "{\"status\": \"done\"}"
         private const val NULL_STATUS_RESPONSE = "{\"status\": \"null\"}"
 
-        private val testCredentials = AtolCredentials("login", "pass")
+        private val testCredentials = Credentials("login", "pass")
         private val testCompanyData = CompanyData("email", "inn", "address", "depersonalizedAddress")
         private val testServiceData = ServiceData("url")
     }
@@ -97,7 +98,7 @@ class AtolServiceTest : AtolTests() {
             body = validAtolResponseJson
         }
 
-        val responseUUID = atolService.sendReceipt(receipt)
+        val responseUUID = atolService.sendReceipt(receipt, testCredentials)
 
         assertThat(responseUUID).isEqualTo(validUUID)
     }
@@ -112,7 +113,7 @@ class AtolServiceTest : AtolTests() {
             body = emptyUUIDAtolResponseJson
         }
 
-        val responseUUID = atolService.sendReceipt(receipt)
+        val responseUUID = atolService.sendReceipt(receipt, testCredentials)
 
         assertThat(responseUUID).isEqualTo(null)
     }
@@ -124,7 +125,7 @@ class AtolServiceTest : AtolTests() {
             .returnsJson { statusCode = 500 }
 
         assertThrows<InnerException> {
-            atolService.sendReceipt(receipt)
+            atolService.sendReceipt(receipt, testCredentials)
         }
     }
 
@@ -135,7 +136,7 @@ class AtolServiceTest : AtolTests() {
             .returnsJson { statusCode = 500 }
 
         assertThrows<InnerException> {
-            atolService.sendReceipt(receipt)
+            atolService.sendReceipt(receipt, testCredentials)
         }
 
         wiremock.verify {
@@ -151,34 +152,37 @@ class AtolServiceTest : AtolTests() {
 
     @Test
     fun `getStatus should return wait status`() {
+        every { receipt.externalId } returns validUUID
         wiremock
             .post { urlPath equalTo getStatusPath }
             .returnsJson { body = WAIT_STATUS_RESPONSE }
 
-        val status = atolService.getStatus(validUUID)
+        val status = atolService.getStatus(receipt, testCredentials)
 
         assertThat(status).isEqualTo(ReceiptState.WAIT)
     }
 
     @Test
     fun `getStatus should return done status`() {
+        every { receipt.externalId } returns validUUID
         wiremock
             .post { urlPath equalTo getStatusPath }
             .returnsJson { body = DONE_STATUS_RESPONSE }
 
-        val status = atolService.getStatus(validUUID)
+        val status = atolService.getStatus(receipt, testCredentials)
 
         assertThat(status).isEqualTo(ReceiptState.DONE)
     }
 
     @Test
     fun `getStatus should thrown an error when status invalid`() {
+        every { receipt.externalId } returns validUUID
         wiremock
             .post { urlPath equalTo getStatusPath }
             .returnsJson { body = NULL_STATUS_RESPONSE }
 
         assertThrows<InnerException> {
-            atolService.getStatus(validUUID)
+            atolService.getStatus(receipt, testCredentials)
         }
     }
 
