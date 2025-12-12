@@ -5,6 +5,7 @@ import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo
 import com.marcinziolo.kotlin.wiremock.contains
 import com.marcinziolo.kotlin.wiremock.equalTo
+import com.marcinziolo.kotlin.wiremock.get
 import com.marcinziolo.kotlin.wiremock.post
 import com.marcinziolo.kotlin.wiremock.returnsJson
 import com.marcinziolo.kotlin.wiremock.verify
@@ -154,7 +155,7 @@ class AtolServiceTest : AtolTests() {
     fun `getStatus should return wait status`() {
         every { receipt.externalId } returns validUUID
         wiremock
-            .post { urlPath equalTo getStatusPath }
+            .get { urlPath equalTo getStatusPath }
             .returnsJson { body = WAIT_STATUS_RESPONSE }
 
         val status = atolService.getStatus(receipt, testCredentials)
@@ -166,7 +167,7 @@ class AtolServiceTest : AtolTests() {
     fun `getStatus should return done status`() {
         every { receipt.externalId } returns validUUID
         wiremock
-            .post { urlPath equalTo getStatusPath }
+            .get { urlPath equalTo getStatusPath }
             .returnsJson { body = DONE_STATUS_RESPONSE }
 
         val status = atolService.getStatus(receipt, testCredentials)
