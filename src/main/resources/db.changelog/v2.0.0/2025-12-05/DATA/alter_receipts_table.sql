@@ -1,0 +1,3 @@
+ALTER TABLE receipts
+    ADD COLUMN product VARCHAR(255),
+    ADD COLUMN channel VARCHAR(255);

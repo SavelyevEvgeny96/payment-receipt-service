@@ -9,7 +9,9 @@ import ru.sogaz.site.paymentReceiptService.dao.ReceiptDao
 import ru.sogaz.site.paymentReceiptService.mapper.receipt.ReceiptMapper
 import ru.sogaz.site.paymentReceiptService.mapper.web.ResponseMapper
 import ru.sogaz.site.paymentReceiptService.producer.ReceiptEventsProducer
-import ru.sogaz.site.paymentReceiptService.service.AtolService
+import ru.sogaz.site.paymentReceiptService.service.atol.AtolService
+import ru.sogaz.site.paymentReceiptService.service.credentials.CredentialsManager
+import ru.sogaz.site.paymentReceiptService.service.receipt.impl.ReceiptServiceImpl
 
 @ExtendWith(MockKExtension::class)
 abstract class ReceiptServiceTests {
@@ -27,6 +29,9 @@ abstract class ReceiptServiceTests {
 
     @RelaxedMockK
     lateinit var receiptEventsProducer: ReceiptEventsProducer
+
+    @MockK
+    lateinit var credentialsManager: CredentialsManager
 
     @InjectMockKs
     lateinit var receiptService: ReceiptServiceImpl

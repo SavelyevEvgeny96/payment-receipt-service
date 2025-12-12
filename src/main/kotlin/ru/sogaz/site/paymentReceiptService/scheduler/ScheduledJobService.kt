@@ -8,7 +8,7 @@ import ru.sogaz.site.paymentReceiptService.dao.ReceiptDao
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
 import ru.sogaz.site.paymentReceiptService.producer.ReceiptEventsProducer
-import ru.sogaz.site.paymentReceiptService.service.ReceiptStatusService
+import ru.sogaz.site.paymentReceiptService.service.receipt.ReceiptStatusService
 import java.time.LocalDateTime
 
 @Component
@@ -20,8 +20,6 @@ class ScheduledJobService(
     companion object {
         private const val OLDEST_RECEIPTS_DAYS: Long = 32
         private const val NEWEST_RECEIPTS_MINUTES: Long = 5
-
-        private const val NOT_FOUND_STATUSES_EXCEPTION_MESSAGE = "Не найдены статусы 'new' или 'wait'"
     }
 
     private val log = loggerFor(javaClass)

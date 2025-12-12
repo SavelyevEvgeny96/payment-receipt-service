@@ -7,7 +7,7 @@ import org.springframework.validation.annotation.Validated
 import ru.sogaz.site.exceptionStarter.starter.config.loggerFor
 import ru.sogaz.site.paymentReceiptService.model.event.ReceiptCreatedEvent
 import ru.sogaz.site.paymentReceiptService.model.exception.SendReceiptException
-import ru.sogaz.site.paymentReceiptService.service.ReceiptService
+import ru.sogaz.site.paymentReceiptService.service.receipt.ReceiptService
 
 @Validated
 @Component

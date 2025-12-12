@@ -123,4 +123,4 @@ config:
 
 scheduled:
   task:
-    cron: ${CHECK_STATUS_CRON:0 * * * * *}
+    cron: ${CHECK_STATUS_CRON:*/10 * * * * *}

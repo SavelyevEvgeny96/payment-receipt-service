@@ -13,6 +13,8 @@ import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory.ConfirmType.NONE
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.amqp.rabbit.retry.ImmediateRequeueMessageRecoverer
+import org.springframework.amqp.rabbit.retry.RejectAndDontRequeueRecoverer
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
 import org.springframework.amqp.support.converter.MessageConverter
 import org.springframework.context.annotation.Bean
@@ -27,10 +29,10 @@ class RabbitConfig(
     private val rabbitProperties: RabbitProperties,
 ) {
     companion object {
-        private const val MAX_RETRY_ATTEMPTS: Int = 100
+        private const val MAX_RETRY_ATTEMPTS: Int = 15
         private const val MIN_RETRY_INTERVAL: Long = 1_000
         private const val RETRY_MULTIPLAYER: Double = 3.0
-        private const val MAX_RETRY_INTERVAL: Long = 600_000
+        private const val MAX_RETRY_INTERVAL: Long = 60_000
     }
 
     @Bean
@@ -148,5 +150,7 @@ class RabbitConfig(
                 MIN_RETRY_INTERVAL,
                 RETRY_MULTIPLAYER,
                 MAX_RETRY_INTERVAL,
-            ).build()
+            )
+            .recoverer(ImmediateRequeueMessageRecoverer())
+            .build()
 }

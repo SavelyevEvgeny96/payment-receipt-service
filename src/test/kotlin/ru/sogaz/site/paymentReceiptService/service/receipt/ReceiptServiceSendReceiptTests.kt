@@ -13,10 +13,15 @@ import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptSystem
 import ru.sogaz.site.paymentReceiptService.model.event.ReceiptCreatedEvent
 import ru.sogaz.site.paymentReceiptService.model.exception.SendReceiptException
+import ru.sogaz.site.paymentReceiptService.model.reference.Credentials
 import java.math.BigDecimal
 import java.util.UUID
 
 class ReceiptServiceSendReceiptTests : ReceiptServiceTests() {
+    companion object {
+        private val testCredentials = Credentials("login", "pass")
+    }
+
     private lateinit var receipt: Receipt
 
     private lateinit var validReceiptUUID: UUID
@@ -40,6 +45,7 @@ class ReceiptServiceSendReceiptTests : ReceiptServiceTests() {
 
         every { receiptDao.findById(validReceiptUUID) } returns receipt
         every { receiptDao.save(any()) } returnsArgument 0
+        every { credentialsManager.findCredentials(any()) } returns testCredentials
     }
 
     @Test
@@ -51,26 +57,26 @@ class ReceiptServiceSendReceiptTests : ReceiptServiceTests() {
         }
 
         verify(exactly = 1) { receiptDao.findById(any()) }
-        verify(exactly = 0) { atolService.sendReceipt(any()) }
+        verify(exactly = 0) { atolService.sendReceipt(any(), any()) }
         verify(exactly = 0) { receiptDao.save(any()) }
     }
 
     @Test
     fun `sendReceipt shouldn't update receipt state when atolClient thrown an error`() {
-        every { atolService.sendReceipt(receipt) } throws mock<InnerException>()
+        every { atolService.sendReceipt(receipt, testCredentials) } throws mock<InnerException>()
 
         assertThrows<InnerException> {
             receiptService.sendReceipt(validCreatedEvent)
         }
 
         verify(exactly = 1) { receiptDao.findById(any()) }
-        verify(exactly = 1) { atolService.sendReceipt(any()) }
+        verify(exactly = 1) { atolService.sendReceipt(any(), any()) }
         verify(exactly = 0) { receiptDao.save(any()) }
     }
 
     @Test
     fun `sendReceipt should update receipt state when atolClient return externalId`() {
-        every { atolService.sendReceipt(receipt) } returns validExternalIdUUID
+        every { atolService.sendReceipt(receipt, testCredentials) } returns validExternalIdUUID
         every { receiptMapper.updateReceiptState(receipt, validExternalIdUUID) } answers { callOriginal() }
 
         val sentReceipt = receiptService.sendReceipt(validCreatedEvent)
@@ -80,13 +86,13 @@ class ReceiptServiceSendReceiptTests : ReceiptServiceTests() {
             .returns(ReceiptState.WAIT, Receipt::state)
 
         verify(exactly = 1) { receiptDao.findById(any()) }
-        verify(exactly = 1) { atolService.sendReceipt(any()) }
+        verify(exactly = 1) { atolService.sendReceipt(any(), any()) }
         verify(exactly = 1) { receiptDao.save(receipt) }
     }
 
     @Test
     fun `sendReceipt should update receipt state when atolClient return answer with errors`() {
-        every { atolService.sendReceipt(receipt) } returns null
+        every { atolService.sendReceipt(receipt, testCredentials) } returns null
         every { receiptMapper.updateReceiptState(receipt, null) } answers { callOriginal() }
 
         val sentReceipt = receiptService.sendReceipt(validCreatedEvent)
@@ -96,7 +102,7 @@ class ReceiptServiceSendReceiptTests : ReceiptServiceTests() {
             .returns(ReceiptState.FAIL, Receipt::state)
 
         verify(exactly = 1) { receiptDao.findById(any()) }
-        verify(exactly = 1) { atolService.sendReceipt(any()) }
+        verify(exactly = 1) { atolService.sendReceipt(any(), any()) }
         verify(exactly = 1) { receiptDao.save(receipt) }
     }
 

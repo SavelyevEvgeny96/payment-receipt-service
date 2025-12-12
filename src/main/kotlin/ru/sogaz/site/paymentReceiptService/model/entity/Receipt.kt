@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentReceiptService.model.entity
 
 import jakarta.persistence.CascadeType
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -27,11 +28,14 @@ data class Receipt(
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
     var orderId: UUID? = null,
+    @Column(name = "state", columnDefinition = "VARCHAR(50)")
     @Enumerated(EnumType.STRING)
     var state: ReceiptState = ReceiptState.NEW,
     @Enumerated(EnumType.STRING)
     var receiptSystem: ReceiptSystem? = null,
     var externalId: UUID? = null,
+    var product: String? = null,
+    var channel: String? = null,
     var total: BigDecimal? = null,
     var clientEmail: String? = null,
     var clientPhone: String? = null,

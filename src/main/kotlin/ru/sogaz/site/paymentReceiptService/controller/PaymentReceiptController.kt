@@ -16,8 +16,8 @@ import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptUpdat
 import ru.sogaz.site.paymentReceiptService.model.web.response.PaymentReceiptCreateResponse
 import ru.sogaz.site.paymentReceiptService.model.web.response.PaymentReceiptStatusResponse
 import ru.sogaz.site.paymentReceiptService.model.web.response.PaymentReceiptUpdateResponse
-import ru.sogaz.site.paymentReceiptService.service.ReceiptService
-import ru.sogaz.site.paymentReceiptService.service.ReceiptStatusService
+import ru.sogaz.site.paymentReceiptService.service.receipt.ReceiptService
+import ru.sogaz.site.paymentReceiptService.service.receipt.ReceiptStatusService
 import ru.sogaz.siter.models.resonses.Response
 import ru.sogaz.siter.models.resonses.getSuccessResponse
 

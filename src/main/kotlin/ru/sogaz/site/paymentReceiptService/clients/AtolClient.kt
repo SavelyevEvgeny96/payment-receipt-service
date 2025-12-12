@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
-import ru.sogaz.site.paymentReceiptService.model.reference.AtolCredentials
-import ru.sogaz.site.paymentReceiptService.model.web.request.atol.AtolRequest
-import ru.sogaz.site.paymentReceiptService.model.web.response.atol.AtolResponse
-import ru.sogaz.site.paymentReceiptService.model.web.response.atol.AtolStatusResponse
-import ru.sogaz.site.paymentReceiptService.model.web.response.atol.TokenResponse
+import ru.sogaz.site.paymentReceiptService.model.atol.request.AtolRequest
+import ru.sogaz.site.paymentReceiptService.model.atol.request.AtolTokenRequest
+import ru.sogaz.site.paymentReceiptService.model.atol.response.AtolResponse
+import ru.sogaz.site.paymentReceiptService.model.atol.response.AtolStatusResponse
+import ru.sogaz.site.paymentReceiptService.model.atol.response.TokenResponse
 import java.util.UUID
 
 @Validated
@@ -24,7 +24,7 @@ interface AtolClient {
     @Valid
     @PostMapping(value = ["/v4/getToken"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun getToken(
-        @RequestBody credentials: AtolCredentials,
+        @RequestBody atolTokenRequest: AtolTokenRequest,
     ): TokenResponse
 
     @Valid

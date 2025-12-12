@@ -8,7 +8,7 @@ import org.springframework.validation.annotation.Validated
 import ru.sogaz.site.exceptionStarter.starter.config.loggerFor
 import ru.sogaz.site.paymentReceiptService.mapper.receipt.ReceiptMapper
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptCreateRequest
-import ru.sogaz.site.paymentReceiptService.service.ReceiptService
+import ru.sogaz.site.paymentReceiptService.service.receipt.ReceiptService
 
 @Validated
 @Component

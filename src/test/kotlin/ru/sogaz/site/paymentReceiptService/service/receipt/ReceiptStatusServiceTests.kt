@@ -21,21 +21,31 @@ import ru.sogaz.site.paymentReceiptService.mapper.web.ResponseMapperImpl
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptSystem
+import ru.sogaz.site.paymentReceiptService.model.reference.Credentials
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptStatusRequest
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptUpdateRequest
 import ru.sogaz.site.paymentReceiptService.model.web.response.PaymentReceiptUpdateResponse
-import ru.sogaz.site.paymentReceiptService.service.AtolService
+import ru.sogaz.site.paymentReceiptService.service.atol.AtolService
+import ru.sogaz.site.paymentReceiptService.service.credentials.CredentialsManager
+import ru.sogaz.site.paymentReceiptService.service.receipt.impl.ReceiptStatusServiceImpl
 import java.math.BigDecimal
 import java.util.UUID
 
 @ExtendWith(MockKExtension::class, SpringExtension::class)
 @Import(value = [ResponseMapperImpl::class])
 class ReceiptStatusServiceTests {
+    companion object {
+        private val testCredentials = Credentials("login", "pass")
+    }
+
     @MockK
     private lateinit var atolService: AtolService
 
     @MockK
     private lateinit var receiptDao: ReceiptDao
+
+    @MockK
+    lateinit var credentialsManager: CredentialsManager
 
     @Autowired
     private lateinit var responseMapper: ResponseMapperImpl
@@ -65,6 +75,7 @@ class ReceiptStatusServiceTests {
         every { receiptDao.findByOrderId(validExternalIdUUID) } returns receipt
         every { receiptDao.findByOrderId(invalidExternalIdUUID) } returns null
         every { receiptDao.save(any()) } returnsArgument 0
+        every { credentialsManager.findCredentials(any()) } returns testCredentials
     }
 
     @Test
@@ -94,7 +105,7 @@ class ReceiptStatusServiceTests {
     fun `updateStatusFromAtol should update receipt state by request`() {
         val receiptSlot = slot<Receipt>()
         val state = ReceiptState.DONE
-        every { atolService.getStatus(validExternalIdUUID) } returns state
+        every { atolService.getStatus(any(), any()) } returns state
 
         val response = receiptStatusService.updateStatusFromAtol(validUpdateRequest)
 
@@ -110,7 +121,7 @@ class ReceiptStatusServiceTests {
     @Test
     fun `updateStatusFromAtol should update receipt state by receipt`() {
         val state = ReceiptState.DONE
-        every { atolService.getStatus(validExternalIdUUID) } returns state
+        every { atolService.getStatus(any(), any()) } returns state
 
         val updatedReceipt = receiptStatusService.updateStatusFromAtol(receipt)
 
@@ -158,5 +169,6 @@ class ReceiptStatusServiceTests {
             atolService = atolService,
             receiptDao = receiptDao,
             responseMapper = responseMapper,
+            credentialsManager = credentialsManager,
         )
 }

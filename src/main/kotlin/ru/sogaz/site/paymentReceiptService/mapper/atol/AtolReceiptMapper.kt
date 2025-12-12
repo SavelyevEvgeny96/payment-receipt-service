@@ -4,12 +4,12 @@ import org.mapstruct.Context
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.MappingConstants
+import ru.sogaz.site.paymentReceiptService.model.atol.request.AtolItemData
+import ru.sogaz.site.paymentReceiptService.model.atol.request.AtolPaymentData
+import ru.sogaz.site.paymentReceiptService.model.atol.request.AtolReceiptData
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
 import ru.sogaz.site.paymentReceiptService.model.entity.ReceiptItem
 import ru.sogaz.site.paymentReceiptService.model.entity.ReceiptPayment
-import ru.sogaz.site.paymentReceiptService.model.web.request.atol.AtolItemData
-import ru.sogaz.site.paymentReceiptService.model.web.request.atol.AtolPaymentData
-import ru.sogaz.site.paymentReceiptService.model.web.request.atol.AtolReceiptData
 import ru.sogaz.site.paymentReceiptService.properties.AtolProperties
 
 @Mapper(
