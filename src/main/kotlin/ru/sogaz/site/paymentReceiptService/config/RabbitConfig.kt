@@ -17,7 +17,6 @@ import org.springframework.amqp.support.converter.MessageConverter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
-import org.springframework.retry.interceptor.RetryOperationsInterceptor
 import ru.sogaz.site.paymentReceiptService.properties.RabbitProperties
 
 @EnableRabbit
