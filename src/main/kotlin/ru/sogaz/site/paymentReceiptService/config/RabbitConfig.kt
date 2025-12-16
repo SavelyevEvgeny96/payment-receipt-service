@@ -119,7 +119,6 @@ class RabbitConfig(
     fun concurrentContainerFactory(
         connectionFactory: ConnectionFactory,
         jsonConverter: MessageConverter,
-        retryInterceptor: RetryOperationsInterceptor,
     ): SimpleRabbitListenerContainerFactory =
         SimpleRabbitListenerContainerFactory().apply {
             setConnectionFactory(connectionFactory)
