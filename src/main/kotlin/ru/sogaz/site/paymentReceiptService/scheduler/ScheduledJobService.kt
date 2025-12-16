@@ -32,7 +32,7 @@ class ScheduledJobService(
     fun checkAtolStatuses() =
         findDocumentForUpdateStatus()
             .mapNotNull(::updateStatusForPaymentDocument)
-            .filter(::receiptHasDoneStatus)
+            .filter(::receiptHasFinalStatus)
             .forEach(receiptEventsProducer::receiptSentEvent)
 
     private fun findDocumentForUpdateStatus(): List<Receipt> =
@@ -63,5 +63,6 @@ class ScheduledJobService(
         }
     }
 
-    private fun receiptHasDoneStatus(receipt: Receipt): Boolean = receipt.state == ReceiptState.DONE
+    private fun receiptHasFinalStatus(receipt: Receipt): Boolean =
+        receipt.state in listOf(ReceiptState.DONE, ReceiptState.FAIL)
 }
