@@ -63,6 +63,5 @@ class ScheduledJobService(
         }
     }
 
-    private fun receiptHasFinalStatus(receipt: Receipt): Boolean =
-        receipt.state in listOf(ReceiptState.DONE, ReceiptState.FAIL)
+    private fun receiptHasFinalStatus(receipt: Receipt): Boolean = receipt.state in listOf(ReceiptState.DONE, ReceiptState.FAIL)
 }

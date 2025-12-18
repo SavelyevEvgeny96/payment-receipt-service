@@ -109,6 +109,11 @@
             <artifactId>logging-starter</artifactId>
             <version>1.0.11-dev</version>
         </dependency>
+		<dependency>
+			<groupId>ru.sogaz.site</groupId>
+			<artifactId>monitoring-starter</artifactId>
+			<version>1.0.1</version>
+		</dependency>
 
 		<!-- Kotlin -->
 		<dependency>
