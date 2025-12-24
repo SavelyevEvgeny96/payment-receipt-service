@@ -8,8 +8,8 @@ import org.mapstruct.MappingConstants
 import org.mapstruct.MappingTarget
 import ru.sogaz.site.paymentReceiptService.model.atol.request.AtolRequest
 import ru.sogaz.site.paymentReceiptService.model.atol.request.AtolTokenRequest
+import ru.sogaz.site.paymentReceiptService.model.credential.Credentials
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
-import ru.sogaz.site.paymentReceiptService.model.reference.Credentials
 import ru.sogaz.site.paymentReceiptService.properties.AtolProperties
 import java.time.LocalDateTime
 import java.time.ZoneOffset

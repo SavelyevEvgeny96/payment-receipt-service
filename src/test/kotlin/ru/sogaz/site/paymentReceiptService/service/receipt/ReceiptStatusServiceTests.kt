@@ -11,20 +11,16 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Import
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentReceiptService.dao.ReceiptDao
-import ru.sogaz.site.paymentReceiptService.mapper.web.ResponseMapperImpl
+import ru.sogaz.site.paymentReceiptService.model.credential.Credentials
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptSystem
-import ru.sogaz.site.paymentReceiptService.model.reference.Credentials
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptStatusRequest
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptUpdateRequest
-import ru.sogaz.site.paymentReceiptService.model.web.response.PaymentReceiptUpdateResponse
 import ru.sogaz.site.paymentReceiptService.service.atol.AtolService
 import ru.sogaz.site.paymentReceiptService.service.credentials.CredentialsManager
 import ru.sogaz.site.paymentReceiptService.service.receipt.impl.ReceiptStatusServiceImpl
@@ -32,7 +28,6 @@ import java.math.BigDecimal
 import java.util.UUID
 
 @ExtendWith(MockKExtension::class, SpringExtension::class)
-@Import(value = [ResponseMapperImpl::class])
 class ReceiptStatusServiceTests {
     companion object {
         private val testCredentials = Credentials("login", "pass")
@@ -46,9 +41,6 @@ class ReceiptStatusServiceTests {
 
     @MockK
     lateinit var credentialsManager: CredentialsManager
-
-    @Autowired
-    private lateinit var responseMapper: ResponseMapperImpl
 
     private lateinit var receiptStatusService: ReceiptStatusServiceImpl
 
@@ -107,11 +99,10 @@ class ReceiptStatusServiceTests {
         val state = ReceiptState.DONE
         every { atolService.getStatus(any(), any()) } returns state
 
-        val response = receiptStatusService.updateStatusFromAtol(validUpdateRequest)
+        val receipt = receiptStatusService.updateStatusFromAtol(validUpdateRequest)
 
-        assertThat(response)
-            .returns(state.value, PaymentReceiptUpdateResponse::stateId)
-            .returns(state.desc, PaymentReceiptUpdateResponse::stateName)
+        assertThat(receipt.state)
+            .isEqualTo(state)
 
         verify { receiptDao.save(capture(receiptSlot)) }
         assertThat(receiptSlot.captured)
@@ -168,7 +159,6 @@ class ReceiptStatusServiceTests {
         ReceiptStatusServiceImpl(
             atolService = atolService,
             receiptDao = receiptDao,
-            responseMapper = responseMapper,
             credentialsManager = credentialsManager,
         )
 }

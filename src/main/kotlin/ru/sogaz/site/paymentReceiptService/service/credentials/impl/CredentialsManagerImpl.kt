@@ -5,10 +5,10 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentReceiptService.dao.CheckoutMappingDao
 import ru.sogaz.site.paymentReceiptService.mapper.credentials.CredentialsMapper
+import ru.sogaz.site.paymentReceiptService.model.credential.CredentialCheckoutsKeeper
+import ru.sogaz.site.paymentReceiptService.model.credential.Credentials
+import ru.sogaz.site.paymentReceiptService.model.credential.CredentialsMapping
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
-import ru.sogaz.site.paymentReceiptService.model.reference.CredentialCheckoutsKeeper
-import ru.sogaz.site.paymentReceiptService.model.reference.Credentials
-import ru.sogaz.site.paymentReceiptService.model.reference.CredentialsMapping
 import ru.sogaz.site.paymentReceiptService.orThrow
 import ru.sogaz.site.paymentReceiptService.service.credentials.CredentialsEncryptor
 import ru.sogaz.site.paymentReceiptService.service.credentials.CredentialsManager

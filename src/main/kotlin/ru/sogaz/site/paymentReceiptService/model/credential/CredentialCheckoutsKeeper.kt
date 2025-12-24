@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentReceiptService.model.reference
+package ru.sogaz.site.paymentReceiptService.model.credential
 
 import ru.sogaz.site.paymentReceiptService.model.entity.CheckoutMapping
 

@@ -12,6 +12,7 @@ import ru.sogaz.site.paymentReceiptService.model.enums.ApiVersion
 import ru.sogaz.site.paymentReceiptService.model.enums.PaymentMethod
 import ru.sogaz.site.paymentReceiptService.model.enums.PaymentType
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptSystem
+import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptType
 import ru.sogaz.site.paymentReceiptService.model.enums.VatType
 import ru.sogaz.site.paymentReceiptService.model.event.MessageMetaInfo
 import ru.sogaz.site.paymentReceiptService.validation.constraint.Name
@@ -22,10 +23,11 @@ import java.math.BigDecimal
 import java.util.UUID
 
 data class PaymentReceiptCreateRequest(
-    val messageMetaInfo: MessageMetaInfo?,
+    val paymentId: UUID,
+    val receiptType: ReceiptType,
     @get:Valid
     val client: ClientInfo,
-    val orderId: UUID,
+    val orderId: UUID?,
     val product: String?,
     val channel: String?,
     @field:NotEmpty
@@ -41,6 +43,7 @@ data class PaymentReceiptCreateRequest(
     val depersonalization: Boolean = false,
     val system: ReceiptSystem,
     val version: ApiVersion,
+    val messageMetaInfo: MessageMetaInfo?,
 )
 
 data class ClientInfo(
@@ -69,11 +72,7 @@ data class PaymentItemRequest(
     val sum: BigDecimal,
     val paymentMethod: PaymentMethod,
     val paymentObject: String,
-    val vat: VatRequest,
-)
-
-data class VatRequest(
-    val type: VatType,
+    val vatType: VatType,
 )
 
 data class PaymentPaymentRequest(

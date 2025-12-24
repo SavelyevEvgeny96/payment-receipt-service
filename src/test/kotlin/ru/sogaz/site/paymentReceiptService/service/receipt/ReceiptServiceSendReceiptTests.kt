@@ -8,12 +8,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
+import ru.sogaz.site.paymentReceiptService.model.credential.Credentials
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptSystem
 import ru.sogaz.site.paymentReceiptService.model.event.ReceiptCreatedEvent
 import ru.sogaz.site.paymentReceiptService.model.exception.SendReceiptException
-import ru.sogaz.site.paymentReceiptService.model.reference.Credentials
 import java.math.BigDecimal
 import java.util.UUID
 

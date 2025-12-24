@@ -29,9 +29,10 @@ interface AtolClient {
     ): TokenResponse
 
     @Valid
-    @PostMapping(value = ["/v4/\${config.atol.api.groupCode}/sell"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PostMapping(value = ["/v4/\${config.atol.api.groupCode}/{receiptType}"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun sendReceipt(
         @RequestHeader token: String,
+        @PathVariable receiptType: String,
         @RequestBody request: AtolRequest,
     ): AtolResponse
 

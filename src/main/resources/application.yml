@@ -88,8 +88,8 @@ logging:
   rabbit:
     enabled: ${LOGGING_RABBIT_ENABLED:true}
     log-body: ${LOGGING_RABBIT_LOG_BODY:true}
-    confirms-enabled: ${LOGGING_RABBIT_CONFIRMS_ENABLED:true}
-    returns-enabled: ${LOGGING_RABBIT_RETURNS_ENABLED:true}
+    confirms-enabled: ${LOGGING_RABBIT_CONFIRMS_ENABLED:false}
+    returns-enabled: ${LOGGING_RABBIT_RETURNS_ENABLED:false}
 
 logstash:
   host: ${LOG_SERVER_HOST:log.sogaz.ru}
@@ -103,9 +103,6 @@ config:
       basePath: ${ATOL_URL:http://localhost:8081/possystem}
       groupCode: ${GROUP_CODE:v4-online-atol-ru_4179}
       tokenTTL: ${TOKEN_TIME:720}
-    credentials:
-      login: ${ATOL_LOGIN:v4-online-atol-ru}
-      pass: ${ATOL_PASS:iGFFuihss}
     company:
       email: ${COMPANY_EMAIL:Diop.Sheykh@sogaz.ru}
       inn: ${COMPANY_INN:5544332219}
@@ -118,11 +115,11 @@ config:
     receiptRequestedRoutingKey: ${RECEIPT_REQUESTED_ROUTING_KEY:receipt.requested}
     receiptRequestedQueue: ${RECEIPT_REQUESTED_QUEUE:receipt.requested.queue}
     receiptRequestedQueueDlq: ${RECEIPT_REQUESTED_QUEUE_DLQ:receipt.requested.queue.dlq}
-    receiptRequestedRoutingKeyDlq: ${RECEIPT_REQUESTED_QUEUE_DLQ:receipt.requested.dlq}
-    receiptCreatedRoutingKey: ${SEND_CHEQUE_ROUTING_KEY:receipt.created}
+    receiptRequestedRoutingKeyDlq: ${RECEIPT_REQUESTED_QUEUE_DLQ_ROUTING_KEY:receipt.requested.dlq}
+    receiptCreatedRoutingKey: ${RECEIPT_CREATED_ROUTING_KEY:receipt.created}
     receiptCreatedQueue: ${RECEIPT_CREATED_QUEUE:receipt.created.queue}
-    receiptSentRoutingKey: ${SEND_CHEQUE_ROUTING_KEY:receipt.sent}
-    receiptSentQueue: ${SEND_CHEQUE_QUEUE:receipt.sent.queue}
+    receiptSentRoutingKey: ${RECEIPT_SENT_ROUTING_KEY:receipt.sent}
+    receiptSentQueue: ${RECEIPT_SENT_QUEUE:receipt.sent.queue}
     concurrency:
       consumers: ${RABBIT_CONCURRENCY_CONSUMERS:2}
       maxConsumers: ${RABBIT_CONCURRENCY_MAX_CONSUMERS:5}

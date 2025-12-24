@@ -6,13 +6,9 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentReceiptService.clients.AtolClient
 import ru.sogaz.site.paymentReceiptService.mapper.atol.AtolMapper
-import ru.sogaz.site.paymentReceiptService.model.atol.request.AtolRequest
-import ru.sogaz.site.paymentReceiptService.model.atol.response.AtolResponse
-import ru.sogaz.site.paymentReceiptService.model.atol.response.AtolStatusResponse
+import ru.sogaz.site.paymentReceiptService.model.credential.Credentials
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
-import ru.sogaz.site.paymentReceiptService.model.reference.Credentials
-import ru.sogaz.site.paymentReceiptService.orThrow
 import ru.sogaz.site.paymentReceiptService.properties.AtolProperties
 import ru.sogaz.site.paymentReceiptService.service.atol.AtolAuthService
 import ru.sogaz.site.paymentReceiptService.service.atol.AtolService
@@ -27,6 +23,7 @@ class AtolServiceImpl(
 ) : AtolService {
     companion object {
         private const val EMPTY_EXTERNAL_ID_MESSAGE = "Для чека не указан externalId"
+        private const val MISSING_RECEIPT_TYPE = "Отсутствует тип операции для чека"
     }
 
     override fun sendReceipt(
@@ -34,9 +31,11 @@ class AtolServiceImpl(
         credentials: Credentials,
     ): UUID? =
         try {
-            receipt
-                .run { atolMapper.mapRequest(this, atolProperties) }
-                .run { sendReceipt(this, credentials) }
+            val atolToken = atolAuthService.getToken(credentials)
+            val atolReceiptType = requireNotNull(receipt.receiptType) { MISSING_RECEIPT_TYPE }
+            val atolRequest = atolMapper.mapRequest(receipt, atolProperties)
+            atolClient
+                .sendReceipt(atolToken, atolReceiptType.desc, atolRequest)
                 .uuid
         } catch (ex: FeignException) {
             when (ex.status()) {
@@ -47,34 +46,17 @@ class AtolServiceImpl(
             throw InnerException(getTraceId(), ex.message)
         }
 
-    private fun sendReceipt(
-        atolRequest: AtolRequest,
-        credentials: Credentials,
-    ): AtolResponse =
-        credentials
-            .run(atolMapper::toTokenRequest)
-            .run(atolAuthService::getToken)
-            .run { atolClient.sendReceipt(this, atolRequest) }
-
     override fun getStatus(
         receipt: Receipt,
         credentials: Credentials,
     ): ReceiptState =
         try {
-            receipt.externalId
-                .orThrow { InnerException(getTraceId(), EMPTY_EXTERNAL_ID_MESSAGE) }
-                .run { getStatus(this, credentials) }
+            val atolToken = atolAuthService.getToken(credentials)
+            val externalId = requireNotNull(receipt.externalId) { EMPTY_EXTERNAL_ID_MESSAGE }
+            atolClient
+                .getStatus(atolToken, externalId)
                 .status
         } catch (ex: Exception) {
             throw InnerException(getTraceId(), ex.message)
         }
-
-    private fun getStatus(
-        externalId: UUID,
-        credentials: Credentials,
-    ): AtolStatusResponse =
-        credentials
-            .run(atolMapper::toTokenRequest)
-            .run(atolAuthService::getToken)
-            .run { atolClient.getStatus(this, externalId) }
 }
