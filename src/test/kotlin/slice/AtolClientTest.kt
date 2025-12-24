@@ -1,4 +1,4 @@
-package ru.sogaz.site.paymentReceiptService.service.slice
+package slice
 
 import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration

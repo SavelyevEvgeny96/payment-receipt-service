@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
-import ru.sogaz.site.paymentReceiptService.mapper.receipt.ReceiptMapper
+import ru.sogaz.site.paymentReceiptService.mapper.web.ResponseMapper
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptCreateRequest
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptStatusRequest
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptUpdateRequest
@@ -26,7 +26,7 @@ import ru.sogaz.siter.models.resonses.getSuccessResponse
 @RequestMapping("/paymentcheck")
 class PaymentReceiptController(
     private val receiptService: ReceiptService,
-    private val receiptMapper: ReceiptMapper,
+    private val responseMapper: ResponseMapper,
     private val receiptStatusService: ReceiptStatusService,
 ) {
     companion object {
@@ -40,8 +40,8 @@ class PaymentReceiptController(
         @Valid @RequestBody request: PaymentReceiptCreateRequest,
     ): ResponseEntity<Response<PaymentReceiptCreateResponse>> =
         request
-            .run(receiptMapper::fromCreateRequest)
             .run(receiptService::createReceipt)
+            .run(responseMapper::toCreateResponse)
             .wrapToSuccessResponse(CREATE_RECEIPT_CODE_SUCCESS)
             .wrapToOkResponseEntity()
 
@@ -51,6 +51,7 @@ class PaymentReceiptController(
     ): ResponseEntity<Response<PaymentReceiptStatusResponse>> =
         request
             .run(receiptStatusService::setStatus)
+            .run(responseMapper::toSetStatusResponse)
             .wrapToSuccessResponse(UPDATE_STATUS_CODE_SUCCESS)
             .wrapToOkResponseEntity()
 
@@ -60,6 +61,7 @@ class PaymentReceiptController(
     ): ResponseEntity<Response<PaymentReceiptUpdateResponse>> =
         request
             .run(receiptStatusService::updateStatusFromAtol)
+            .run(responseMapper::toUpdateStatusResponse)
             .wrapToSuccessResponse(GET_STATUS_CODE_SUCCESS)
             .wrapToOkResponseEntity()
 

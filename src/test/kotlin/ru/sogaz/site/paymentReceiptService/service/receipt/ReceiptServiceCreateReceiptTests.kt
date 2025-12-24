@@ -27,7 +27,7 @@ class ReceiptServiceCreateReceiptTests : ReceiptServiceTests() {
 
     @Test
     fun `createReceipt should save entity end send event`() {
-        receiptService.createReceipt(receipt)
+        receiptService.createReceipt(requests)
 
         verify(exactly = 1) { receiptDao.save(any()) }
         verify(exactly = 1) { receiptEventsProducer.receiptCreatedEvent(any()) }
@@ -38,7 +38,7 @@ class ReceiptServiceCreateReceiptTests : ReceiptServiceTests() {
         every { receiptDao.save(receipt) } throws mock<InnerException>()
 
         assertThrows<InnerException> {
-            receiptService.createReceipt(receipt)
+            receiptService.createReceipt(requests)
         }
 
         verify(exactly = 1) { receiptDao.save(any()) }

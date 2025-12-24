@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentReceiptService.model.atol.request.AtolTokenRequest
 import ru.sogaz.site.paymentReceiptService.model.atol.response.TokenResponse
-import ru.sogaz.site.paymentReceiptService.service.atol.AtolAuthService
+import ru.sogaz.site.paymentReceiptService.model.credential.Credentials
 
 class AtolAuthServiceTest : AtolTests() {
     companion object {
@@ -27,6 +27,9 @@ class AtolAuthServiceTest : AtolTests() {
 
     @RelaxedMockK
     private lateinit var atolTokenRequest: AtolTokenRequest
+
+    @RelaxedMockK
+    private lateinit var credentials: Credentials
 
     @Autowired
     private lateinit var atolAuthService: AtolAuthService
@@ -55,7 +58,7 @@ class AtolAuthServiceTest : AtolTests() {
             .post { url equalTo GET_TOKEN_PATH }
             .returnsJson { body = validTokenResponse }
 
-        val token = atolAuthService.getToken(atolTokenRequest)
+        val token = atolAuthService.getToken(credentials)
 
         assertThat(token).isEqualTo(VALID_TOKEN)
     }
@@ -67,7 +70,7 @@ class AtolAuthServiceTest : AtolTests() {
             .returnsJson { body = emptyTokenResponse }
 
         assertThrows<InnerException> {
-            atolAuthService.getToken(atolTokenRequest)
+            atolAuthService.getToken(credentials)
         }
     }
 
@@ -78,7 +81,7 @@ class AtolAuthServiceTest : AtolTests() {
             .returnsJson { body = ERROR_TOKEN_RESPONSE }
 
         assertThrows<InnerException> {
-            atolAuthService.getToken(atolTokenRequest)
+            atolAuthService.getToken(credentials)
         }
     }
 
@@ -89,7 +92,7 @@ class AtolAuthServiceTest : AtolTests() {
             .returnsJson { statusCode = 500 }
 
         assertThrows<InnerException> {
-            atolAuthService.getToken(atolTokenRequest)
+            atolAuthService.getToken(credentials)
         }
     }
 }

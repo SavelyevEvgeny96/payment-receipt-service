@@ -1,7 +1,6 @@
 package ru.sogaz.site.paymentReceiptService.model.entity
 
 import jakarta.persistence.CascadeType
-import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -17,6 +16,7 @@ import org.hibernate.annotations.FetchMode
 import org.hibernate.annotations.UpdateTimestamp
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptSystem
+import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptType
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.UUID
@@ -27,12 +27,14 @@ data class Receipt(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
+    var paymentId: UUID? = null,
     var orderId: UUID? = null,
-    @Column(name = "state", columnDefinition = "VARCHAR(50)")
     @Enumerated(EnumType.STRING)
     var state: ReceiptState = ReceiptState.NEW,
     @Enumerated(EnumType.STRING)
     var receiptSystem: ReceiptSystem? = null,
+    @Enumerated(EnumType.STRING)
+    var receiptType: ReceiptType? = null,
     var externalId: UUID? = null,
     var product: String? = null,
     var channel: String? = null,

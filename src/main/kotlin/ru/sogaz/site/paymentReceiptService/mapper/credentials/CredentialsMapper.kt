@@ -1,7 +1,7 @@
 package ru.sogaz.site.paymentReceiptService.mapper.credentials
 
 import org.mapstruct.Mapper
-import ru.sogaz.site.paymentReceiptService.model.reference.CredentialsMapping
+import ru.sogaz.site.paymentReceiptService.model.credential.CredentialsMapping
 
 @Mapper
 abstract class CredentialsMapper {

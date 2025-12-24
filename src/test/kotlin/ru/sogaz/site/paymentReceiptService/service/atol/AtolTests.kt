@@ -15,7 +15,7 @@ import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import ru.sogaz.site.paymentReceiptService.properties.AtolProperties
-import ru.sogaz.site.paymentReceiptService.service.slice.AtolClientTest
+import slice.AtolClientTest
 import java.net.ServerSocket
 
 @TestInstance(PER_CLASS)

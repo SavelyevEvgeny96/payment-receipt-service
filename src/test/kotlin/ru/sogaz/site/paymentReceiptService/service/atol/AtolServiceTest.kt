@@ -20,13 +20,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentReceiptService.model.atol.response.AtolResponse
 import ru.sogaz.site.paymentReceiptService.model.atol.response.TokenResponse
+import ru.sogaz.site.paymentReceiptService.model.credential.Credentials
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
+import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptType
 import ru.sogaz.site.paymentReceiptService.model.reference.CompanyData
-import ru.sogaz.site.paymentReceiptService.model.reference.Credentials
 import ru.sogaz.site.paymentReceiptService.model.reference.ServiceData
 import ru.sogaz.site.paymentReceiptService.properties.AtolProperties
-import ru.sogaz.site.paymentReceiptService.service.atol.AtolService
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -88,6 +88,8 @@ class AtolServiceTest : AtolTests() {
         wiremock
             .post { url equalTo GET_TOKEN_PATH }
             .returnsJson { body = validTokenResponseJson }
+
+        every { receipt.receiptType } returns ReceiptType.SELL
     }
 
     @Test
@@ -198,7 +200,6 @@ class AtolServiceTest : AtolTests() {
 
     private fun initTestProperty(atolProperties: AtolProperties) =
         atolProperties.apply {
-            credentials = testCredentials
             company = testCompanyData
             callback = testServiceData
         }
