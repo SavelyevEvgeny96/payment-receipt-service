@@ -24,6 +24,15 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/receipt}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:1234}
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: 5672
+    username: ${RABBIT_USERNAME:dev}
+    password: ${RABBIT_PASSWORD:dev}
+    virtual-host: /
+    listener:
+      simple:
+        acknowledge-mode: auto
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
   output:
