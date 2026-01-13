@@ -3,7 +3,7 @@ FROM nexus.sogaz.ru/maven:3.9.6-eclipse-temurin-21 AS builder
 WORKDIR /app
 
 # Прокидываем настройки Maven для работы через Nexus
-COPY settings.xml /root/.m2/settings.xml
+COPY ./mocks/maven/settings.xml /root/.m2/settings.xml
 
 # Копируем pom и исходники
 COPY pom.xml .

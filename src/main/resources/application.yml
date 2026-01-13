@@ -5,7 +5,7 @@ app:
     description: ${PROJECT_DESCRIPTION:Payment Receipt Service}
     artifact_Id: ${PROJECT_ARTIFACTID:payment-receipt-service}
     group_Id: ${PROJECT_GROUPID:ru.sogaz.site}
-    app_profile: ${ENVIRONMENT:dev}
+    app_profile: ${ENVIRONMENT:local}
     java-version: ${JAVA_VERSION:21}
 
 server:
@@ -23,16 +23,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: ${DB_URL:jdbc:postgresql://localhost:5432/receipt}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:1234}
-  rabbitmq:
-    host: ${RABBIT_HOST:localhost}
-    port: 5672
-    username: ${RABBIT_USERNAME:dev}
-    password: ${RABBIT_PASSWORD:dev}
-    virtual-host: /
-    listener:
-      simple:
-        acknowledge-mode: auto
+    password: ${DB_PASSWORD:123456}
   liquibase:
     change-log: db.changelog/db.changelog-master.yaml
   output:
@@ -40,22 +31,40 @@ spring:
       enabled: ALWAYS
   cache:
     type: caffeine
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:dev}
+    password: ${RABBITMQ_PASSWORD:dev}
+    virtual-host: /
+
+resilience4j:
+  retry:
+    instances:
+      rabbitConsumerRetry:
+        maxAttempts: ${RABBIT_CONSUMER_RETRY_MAX_ATTEMPTS:4}
+        waitDuration: ${RABBIT_CONSUMER_RETRY_INITIAL_WAIT_DURATIONS:10s}
+        enableExponentialBackoff: ${RABBIT_CONSUMER_RETRY_EXPONENTIAL:true}
+        exponentialBackoffMultiplier: ${RABBIT_CONSUMER_RETRY_WAIT_MULTIPLAYER:10}
 
 management:
   endpoints:
     web:
       exposure:
-        include: prometheus,health
+        include: "*"
   metrics:
     tags:
       application: ${HOSTNAME:localhost}
+    export:
+      prometheus:
+        enabled: true
   endpoint:
     health:
       show-details: always
       probes:
         enabled: true
   server:
-    port: ${MANAGEMENT_SERVER_PORT:8091}
+    port: ${MANAGEMENT_SERVICE_PORT:8091}
   health:
     livenessState:
       enable: true
@@ -68,6 +77,19 @@ logging:
       sogaz:
         site:
           pattern: ${LOGGING_LEVEL_RU_SOGAZ_ESB:DEBUG}
+  proxy:
+    frontend-enabled: ${LOGGING_PROXY_FRONTEND_ENABLED:true}
+    upstream-enabled: ${LOGGING_PROXY_UPSTREAM_ENABLED:true}
+    max-body-bytes: ${LOGGING_PROXY_MAX_BODY_BYTES:6000}
+    log-headers: ${LOGGING_PROXY_LOG_HEADERS:false}
+    stacktrace-enabled: ${LOGGING_PROXY_STACKTRACE_ENABLE:false}
+    sensitive-fields: ${LOGGING_SENSITIVE_FIELDS}
+
+  rabbit:
+    enabled: ${LOGGING_RABBIT_ENABLED:true}
+    log-body: ${LOGGING_RABBIT_LOG_BODY:true}
+    confirms-enabled: ${LOGGING_RABBIT_CONFIRMS_ENABLED:false}
+    returns-enabled: ${LOGGING_RABBIT_RETURNS_ENABLED:false}
 
 logstash:
   host: ${LOG_SERVER_HOST:log.sogaz.ru}
@@ -76,17 +98,38 @@ logstash:
   level_test: ${LOG_LEVEL_TEST:INFO}
 
 config:
-  atolURL: ${ATOL_URL:https://testonline.atol.ru/possystem}
-  AtolLogin: ${ATOL_LOGIN:v4-online-atol-ru}
-  AtolPass: ${ATOL_PASS:iGFFuihss}
-  tokenTime: ${TOKEN_TIME:720}
-  callbackURL: ${CALLBACK_URL:http://localhost:8080/paymentCheck/status}
-  companyEmail: ${COMPANY_EMAIL:Diop.Sheykh@sogaz.ru}
-  companyInn: ${COMPANY_INN:5544332219}
-  paymentAddress: ${PAYMENT_ADDRESS:https://your-payment.url}
-  groupCode: ${GROUP_CODE:v4-online-atol-ru_4179}
-  periodStatusUpdate: ${PERIOD_STATUS_UPDATE:10}
+  atol:
+    api:
+      basePath: ${ATOL_URL:http://localhost:8081/possystem}
+      groupCode: ${GROUP_CODE:v4-online-atol-ru_4179}
+      tokenTTL: ${TOKEN_TIME:720}
+    company:
+      email: ${COMPANY_EMAIL:Diop.Sheykh@sogaz.ru}
+      inn: ${COMPANY_INN:5544332219}
+      paymentAddress: ${PAYMENT_ADDRESS:https://your-payment.url}
+      depersonalizedPaymentAddress: ${DEPERSONALIZED_PAYMENT_ADDRESS:http://health-and-care.ru}
+    callback:
+      url: ${CALLBACK_URL:http://localhost:8080/paymentcheck/status}
+  rabbit:
+    receiptExchange: ${RECEIPT_EXCHANGE:receipt.exchange}
+    receiptRequestedRoutingKey: ${RECEIPT_REQUESTED_ROUTING_KEY:receipt.requested}
+    receiptRequestedQueue: ${RECEIPT_REQUESTED_QUEUE:receipt.requested.queue}
+    receiptRequestedQueueDlq: ${RECEIPT_REQUESTED_QUEUE_DLQ:receipt.requested.queue.dlq}
+    receiptRequestedRoutingKeyDlq: ${RECEIPT_REQUESTED_QUEUE_DLQ_ROUTING_KEY:receipt.requested.dlq}
+    receiptCreatedRoutingKey: ${RECEIPT_CREATED_ROUTING_KEY:receipt.created}
+    receiptCreatedQueue: ${RECEIPT_CREATED_QUEUE:receipt.created.queue}
+    receiptSentRoutingKey: ${RECEIPT_SENT_ROUTING_KEY:receipt.sent}
+    receiptSentQueue: ${RECEIPT_SENT_QUEUE:receipt.sent.queue}
+    concurrency:
+      consumers: ${RABBIT_CONCURRENCY_CONSUMERS:2}
+      maxConsumers: ${RABBIT_CONCURRENCY_MAX_CONSUMERS:5}
+      stopConsumerMinIntervalMs: ${RABBIT_CONCURRENCY_STOP_CONSUMERS_MIN_INTERVALS_MS:10000}
+  feign:
+    retryer:
+      maxRetries: ${ATOL_CLIENT_MAX_RETRIES:1}
+      minTimeoutMs: ${ATOL_CLIENT_MIN_TIMEOUT_MS:250}
+      maxTimeoutMs: ${ATOL_CLIENT_MAX_TIMEOUT_MS:3000}
 
 scheduled:
   task:
-    defaultDelay: ${CHECK_STATUS_DELAY:60000}
+    cron: ${CHECK_STATUS_CRON:0 * * * * *}

@@ -1,0 +1,78 @@
+{
+  "users": [
+    {
+    "name": "dev",
+    "password": "dev",
+    "tags": ["administrator"]
+    }
+  ],
+  "vhosts": [
+    {
+    "name": "\/"
+    }
+  ],
+  "permissions": [
+    {
+    "user": "dev",
+    "vhost": "\/",
+    "configure": ".*",
+    "write": ".*",
+    "read": ".*"
+    }
+  ],
+  "queues": [
+    {
+      "name": "receipt.requested.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "",
+        "x-dead-letter-routing-key": "receipt.requested.queue.dlq"
+      }
+    },
+    {
+      "name": "receipt.sent.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "receipt.requested.queue.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "receipt.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "vhost": "/",
+      "source": "receipt.exchange",
+      "destination": "receipt.requested.queue",
+      "destination_type": "queue",
+      "routing_key": "receipt.requested",
+      "arguments": {}
+    },
+    {
+      "vhost": "/",
+      "source": "receipt.exchange",
+      "destination": "receipt.sent.queue",
+      "destination_type": "queue",
+      "routing_key": "receipt.sent",
+      "arguments": {}
+    }
+  ]
+}

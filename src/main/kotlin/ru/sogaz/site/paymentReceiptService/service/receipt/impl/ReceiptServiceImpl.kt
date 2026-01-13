@@ -1,0 +1,51 @@
+package ru.sogaz.site.paymentReceiptService.service.receipt.impl
+
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import ru.sogaz.site.paymentReceiptService.dao.ReceiptDao
+import ru.sogaz.site.paymentReceiptService.mapper.receipt.ReceiptMapper
+import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
+import ru.sogaz.site.paymentReceiptService.model.event.ReceiptCreatedEvent
+import ru.sogaz.site.paymentReceiptService.model.exception.SendReceiptException
+import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptCreateRequest
+import ru.sogaz.site.paymentReceiptService.orThrow
+import ru.sogaz.site.paymentReceiptService.producer.ReceiptEventsProducer
+import ru.sogaz.site.paymentReceiptService.service.atol.AtolService
+import ru.sogaz.site.paymentReceiptService.service.credentials.CredentialsManager
+import ru.sogaz.site.paymentReceiptService.service.receipt.ReceiptService
+
+@Service
+@Transactional(rollbackFor = [Exception::class])
+class ReceiptServiceImpl(
+    private val receiptDao: ReceiptDao,
+    private val atolService: AtolService,
+    private val receiptMapper: ReceiptMapper,
+    private val receiptEventsProducer: ReceiptEventsProducer,
+    private val credentialsManager: CredentialsManager,
+) : ReceiptService {
+    companion object {
+        private const val RECEIPT_NOT_FOUND_EXCEPTION_MESSAGE = "Не удалось найти чек на отправку по id [%s]"
+    }
+
+    override fun createReceipt(receiptCreateRequest: PaymentReceiptCreateRequest): Receipt =
+        receiptCreateRequest
+            .run(receiptMapper::fromCreateRequest)
+            .run(receiptDao::save)
+            .also(receiptEventsProducer::receiptCreatedEvent)
+
+    override fun sendReceipt(receiptCreatedEvent: ReceiptCreatedEvent): Receipt =
+        receiptCreatedEvent.id
+            .run(receiptDao::findById)
+            .orThrow { notFoundException(receiptCreatedEvent) }
+            .run(::sendReceipt)
+
+    private fun notFoundException(receiptCreatedEvent: ReceiptCreatedEvent): SendReceiptException =
+        SendReceiptException(RECEIPT_NOT_FOUND_EXCEPTION_MESSAGE.format(receiptCreatedEvent.id))
+
+    private fun sendReceipt(receipt: Receipt): Receipt =
+        receipt
+            .run(credentialsManager::findCredentials)
+            .run { atolService.sendReceipt(receipt, this) }
+            .run { receiptMapper.updateReceiptState(receipt, this) }
+            .run(receiptDao::save)
+}

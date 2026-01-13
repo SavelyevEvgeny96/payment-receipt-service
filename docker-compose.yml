@@ -3,75 +3,78 @@ version: '3.9'
 services:
   postgres:
     image: nexus.sogaz.ru/postgres:16
-    container_name: shedlock_postgres
+    container_name: receipt_service_postgres
     environment:
-      POSTGRES_DB: payment_receipt_service_db
-      POSTGRES_USER: payment_receipt_user
-      POSTGRES_PASSWORD: payment_receipt_pass
+      POSTGRES_DB: receipt_service_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - "5430:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+#    command: ["postgres", "-c", "log_statement=all"] # Для включения подробных логов postgres
     networks:
-      - shedlock-net
+      - receipt-network
 
-  # Билдим один раз образ сервиса
-  payment-service-build:
+  rabbitmq:
+    image: nexus.sogaz.ru/rabbitmq:4.1-management
+    container_name: receipt-rabbitmq
+    ports:
+      - "5672:5672"     # AMQP для приложения
+      - "15672:15672"   # Web UI
+    environment:
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: >
+        -rabbitmq_management load_definitions "/etc/rabbitmq/definitions.json"
+    volumes:
+      - ./mocks/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - receipt-network
+
+  atol-mock:
+    image: nexus.sogaz.ru/wiremock/wiremock:3.13.2
+    container_name: atol-mock
+    ports:
+      - "8081:8081"
+    command: [ "--verbose","--port","8081","--root-dir","/home/wiremock", "--global-response-templating" ]
+    volumes:
+      - ./mocks/atol:/home/wiremock
+    restart: unless-stopped
+    networks:
+      - receipt-network
+
+  receipt-service:
+    # Сначала пробуем загрузить образ
+    image: receipt-service-local
+    # А если его нет, то создаем из Dockerfile из той же директории
     build: .
-    image: payment-receipt-service-local
-    networks:
-      - shedlock-net
-
-  # Инстанс №1 — с Liquibase
-  payment-service-1:
-    image: payment-receipt-service-local
-    container_name: payment-receipt-service-1
+    # Подтягиваем переменные окружения из .env, если такой есть в той же директории
+    env_file:
+      - .dev.env
+    # Вручную переопределяем по необходимости
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payment_receipt_service_db
-      SPRING_DATASOURCE_USERNAME: payment_receipt_user
-      SPRING_DATASOURCE_PASSWORD: payment_receipt_pass
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/receipt_service_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: pass
       SPRING_PROFILES_ACTIVE: local
-      SPRING_LIQUIBASE_ENABLED: "true"
+      RABBITMQ_HOST: rabbitmq
+      ATOL_URL: http://atol-mock:8081/possystem
+    deploy:
+      # Указываем запуск с возможностью репликации
+      mode: replicated
+      # После успешного запуска одного экземпляра можем масштабировать командой: `docker-compose scale receipt-service=6`
+      replicas: 1
     depends_on:
       - postgres
-      - payment-service-build
+      - rabbitmq
+      - atol-mock
     networks:
-      - shedlock-net
-
-  # Инстанс №2 — без Liquibase
-  payment-service-2:
-    image: payment-receipt-service-local
-    container_name: payment-receipt-service-2
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payment_receipt_service_db
-      SPRING_DATASOURCE_USERNAME: payment_receipt_user
-      SPRING_DATASOURCE_PASSWORD: payment_receipt_pass
-      SPRING_PROFILES_ACTIVE: local
-      SPRING_LIQUIBASE_ENABLED: "false"
-    depends_on:
-      - postgres
-      - payment-service-build
-    networks:
-      - shedlock-net
-
-  # Инстанс №3 — без Liquibase
-  payment-service-3:
-    image: payment-receipt-service-local
-    container_name: payment-receipt-service-3
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payment_receipt_service_db
-      SPRING_DATASOURCE_USERNAME: payment_receipt_user
-      SPRING_DATASOURCE_PASSWORD: payment_receipt_pass
-      SPRING_PROFILES_ACTIVE: local
-      SPRING_LIQUIBASE_ENABLED: "false"
-    depends_on:
-      - postgres
-      - payment-service-build
-    networks:
-      - shedlock-net
+      - receipt-network
 
 networks:
-  shedlock-net:
+  receipt-network:
 
 volumes:
   pgdata:
+  rabbitmq-data:

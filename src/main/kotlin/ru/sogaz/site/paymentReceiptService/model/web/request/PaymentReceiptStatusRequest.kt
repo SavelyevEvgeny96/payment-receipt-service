@@ -1,6 +1,8 @@
 package ru.sogaz.site.paymentReceiptService.model.web.request
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
+import java.util.UUID
 
 data class PaymentReceiptStatusRequest(
     @JsonProperty("callback_url")
@@ -12,13 +14,13 @@ data class PaymentReceiptStatusRequest(
     @JsonProperty("error")
     val error: PaymentCheckError?,
     @JsonProperty("external_id")
-    val externalId: String,
+    val externalId: UUID,
     @JsonProperty("group_code")
     val groupCode: String,
     @JsonProperty("payload")
     val payload: PaymentCheckPayload,
     @JsonProperty("status")
-    val status: String,
+    val status: ReceiptState,
     @JsonProperty("timestamp")
     val timestamp: String,
     @JsonProperty("uuid")

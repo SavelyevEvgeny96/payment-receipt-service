@@ -17,6 +17,11 @@
     <appender name="GELF-TCP" class="de.siegmar.logbackgelf.GelfTcpAppender">
         <graylogHost>${host}</graylogHost>
         <graylogPort>${port}</graylogPort>
+
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+
         <encoder class="de.siegmar.logbackgelf.GelfEncoder">
             <originHost>${service}</originHost>
             <includeRawMessage>false</includeRawMessage>
@@ -33,9 +38,11 @@
         </encoder>
     </appender>
 
-    <appender name="ASYNC GELF-TCP" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="GELF-TCP" />
+    <appender name="ASYNC-GELF" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="GELF-TCP"/>
         <neverBlock>true</neverBlock>
+        <queueSize>256</queueSize>
+        <discardingThreshold>0</discardingThreshold>
     </appender>
 
     <springProfile name="local">
@@ -43,20 +50,11 @@
             <appender-ref ref="STDOUT"/>
         </root>
     </springProfile>
-    <springProfile name="dev || test">
-        <root level="${level_test}">
-            <appender-ref ref="GELF-TCP"/>
-        </root>
-    </springProfile>
-    <springProfile name="prod || stage">
-        <root level="${level}">
-            <appender-ref ref="ASYNC GELF-TCP"/>
-        </root>
-    </springProfile>
-    <springProfile name="default">
+    <springProfile name="!local">
         <root level="${level}">
             <appender-ref ref="STDOUT"/>
-            <appender-ref ref="ASYNC GELF-TCP"/>
+            <appender-ref ref="ASYNC-GELF"/>
         </root>
     </springProfile>
+
 </configuration>
