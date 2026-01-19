@@ -16,6 +16,7 @@ import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptUpdat
 import ru.sogaz.site.paymentReceiptService.model.web.response.PaymentReceiptCreateResponse
 import ru.sogaz.site.paymentReceiptService.model.web.response.PaymentReceiptStatusResponse
 import ru.sogaz.site.paymentReceiptService.model.web.response.PaymentReceiptUpdateResponse
+import ru.sogaz.site.paymentReceiptService.service.metrics.AtolCallbackMetricsService
 import ru.sogaz.site.paymentReceiptService.service.receipt.ReceiptService
 import ru.sogaz.site.paymentReceiptService.service.receipt.ReceiptStatusService
 import ru.sogaz.siter.models.resonses.Response
@@ -28,6 +29,7 @@ class PaymentReceiptController(
     private val receiptService: ReceiptService,
     private val responseMapper: ResponseMapper,
     private val receiptStatusService: ReceiptStatusService,
+    private val atolCallbackMetricsService: AtolCallbackMetricsService,
 ) {
     companion object {
         const val CREATE_RECEIPT_CODE_SUCCESS = 1101550200
@@ -50,6 +52,7 @@ class PaymentReceiptController(
         @RequestBody request: PaymentReceiptStatusRequest,
     ): ResponseEntity<Response<PaymentReceiptStatusResponse>> =
         request
+            .also(atolCallbackMetricsService::setMetrics)
             .run(receiptStatusService::setStatus)
             .run(responseMapper::toSetStatusResponse)
             .wrapToSuccessResponse(UPDATE_STATUS_CODE_SUCCESS)
