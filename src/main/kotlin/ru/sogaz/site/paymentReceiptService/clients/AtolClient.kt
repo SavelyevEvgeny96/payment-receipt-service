@@ -29,16 +29,18 @@ interface AtolClient {
     ): TokenResponse
 
     @Valid
-    @PostMapping(value = ["/v4/\${config.atol.api.groupCode}/{receiptType}"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PostMapping(value = ["/v4/{groupCode}/{receiptType}"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun sendReceipt(
         @RequestHeader token: String,
+        @PathVariable groupCode: String,
         @PathVariable receiptType: String,
         @RequestBody request: AtolRequest,
     ): AtolResponse
 
-    @GetMapping(value = ["/v4/\${config.atol.api.groupCode}/report/{externalId}"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @GetMapping(value = ["/v4/{groupCode}/report/{externalId}"], consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun getStatus(
         @RequestHeader token: String,
+        @PathVariable groupCode: String,
         @PathVariable externalId: UUID,
     ): AtolStatusResponse
 }

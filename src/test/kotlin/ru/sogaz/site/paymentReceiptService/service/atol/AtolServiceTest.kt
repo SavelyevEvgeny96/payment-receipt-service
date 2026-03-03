@@ -32,9 +32,10 @@ import java.util.UUID
 
 class AtolServiceTest : AtolTests() {
     companion object {
+        private const val GROUP_CODE = "group"
         private const val GET_TOKEN_PATH = "/v4/getToken"
-        private const val SEND_RECEIPT_PATH = "/v4/group/sell"
-        private const val GET_STATUS_PATH_PATTERN = "/v4/group/report/%s"
+        private const val SEND_RECEIPT_PATH = "/v4/$GROUP_CODE/sell"
+        private const val GET_STATUS_PATH_PATTERN = "/v4/$GROUP_CODE/report/%s"
 
         private const val VALID_TOKEN = "valid-token"
 
@@ -42,7 +43,7 @@ class AtolServiceTest : AtolTests() {
         private const val DONE_STATUS_RESPONSE = "{\"status\": \"done\"}"
         private const val NULL_STATUS_RESPONSE = "{\"status\": \"null\"}"
 
-        private val testCredentials = Credentials("login", "pass")
+        private val testCredentials = Credentials(GROUP_CODE, "pass")
         private val testCompanyData = CompanyData("email", "inn", "address", "depersonalizedAddress")
         private val testServiceData = ServiceData("url")
     }
