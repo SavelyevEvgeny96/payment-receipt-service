@@ -29,8 +29,8 @@ class ReceiptRequestedEventConsumer(
     ) {
         try {
             receiptService.createReceipt(message)
-        } catch (ex: DataIntegrityViolationException) {
-            logger.warn(CREATE_RECEIPT_ERROR_MESSAGE, ex)
+        } catch (_: DataIntegrityViolationException) {
+            logger.warn(CREATE_RECEIPT_ERROR_MESSAGE)
         }
     }
 }
