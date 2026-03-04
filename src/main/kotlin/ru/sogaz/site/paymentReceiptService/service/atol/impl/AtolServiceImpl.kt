@@ -32,11 +32,10 @@ class AtolServiceImpl(
     ): UUID? =
         try {
             val atolToken = atolAuthService.getToken(credentials)
-            println(atolToken)
             val atolReceiptType = requireNotNull(receipt.receiptType) { MISSING_RECEIPT_TYPE }
             val atolRequest = atolMapper.mapRequest(receipt, atolProperties)
             atolClient
-                .sendReceipt(atolToken, credentials.login, atolReceiptType.desc, atolRequest)
+                .sendReceipt(atolToken, atolReceiptType.desc, atolRequest)
                 .uuid
         } catch (ex: FeignException) {
             when (ex.status()) {
@@ -55,7 +54,7 @@ class AtolServiceImpl(
             val atolToken = atolAuthService.getToken(credentials)
             val externalId = requireNotNull(receipt.externalId) { EMPTY_EXTERNAL_ID_MESSAGE }
             atolClient
-                .getStatus(atolToken, credentials.login, externalId)
+                .getStatus(atolToken, externalId)
                 .status
         } catch (ex: Exception) {
             throw InnerException(getTraceId(), ex.message)
