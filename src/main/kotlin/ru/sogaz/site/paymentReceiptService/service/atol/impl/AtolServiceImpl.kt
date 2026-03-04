@@ -32,6 +32,7 @@ class AtolServiceImpl(
     ): UUID? =
         try {
             val atolToken = atolAuthService.getToken(credentials)
+            println(atolToken)
             val atolReceiptType = requireNotNull(receipt.receiptType) { MISSING_RECEIPT_TYPE }
             val atolRequest = atolMapper.mapRequest(receipt, atolProperties)
             atolClient

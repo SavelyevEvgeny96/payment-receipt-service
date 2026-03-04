@@ -2,7 +2,6 @@ config:
   atol:
     api:
       basePath: http://localhost:3000
-      groupCode: v4-online-atol-ru_4179
       tokenTTL: 3
     credentials:
       login: v4-online-atol-ru

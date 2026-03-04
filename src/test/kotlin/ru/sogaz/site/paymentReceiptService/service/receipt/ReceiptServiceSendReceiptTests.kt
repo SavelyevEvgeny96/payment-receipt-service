@@ -70,7 +70,7 @@ class ReceiptServiceSendReceiptTests : ReceiptServiceTests() {
         }
 
         verify(exactly = 1) { receiptDao.findById(any()) }
-        verify(exactly = 1) { atolService.sendReceipt(any(), any()) }
+        verify(exactly = 1) { atolService.sendReceipt(any(), testCredentials) }
         verify(exactly = 0) { receiptDao.save(any()) }
     }
 
@@ -86,7 +86,7 @@ class ReceiptServiceSendReceiptTests : ReceiptServiceTests() {
             .returns(ReceiptState.WAIT, Receipt::state)
 
         verify(exactly = 1) { receiptDao.findById(any()) }
-        verify(exactly = 1) { atolService.sendReceipt(any(), any()) }
+        verify(exactly = 1) { atolService.sendReceipt(any(), testCredentials) }
         verify(exactly = 1) { receiptDao.save(receipt) }
     }
 
@@ -102,7 +102,7 @@ class ReceiptServiceSendReceiptTests : ReceiptServiceTests() {
             .returns(ReceiptState.FAIL, Receipt::state)
 
         verify(exactly = 1) { receiptDao.findById(any()) }
-        verify(exactly = 1) { atolService.sendReceipt(any(), any()) }
+        verify(exactly = 1) { atolService.sendReceipt(any(), testCredentials) }
         verify(exactly = 1) { receiptDao.save(receipt) }
     }
 
