@@ -40,7 +40,14 @@ class AtolServiceTest : AtolTests() {
         private const val VALID_TOKEN = "valid-token"
 
         private const val WAIT_STATUS_RESPONSE = "{\"status\": \"wait\"}"
-        private const val DONE_STATUS_RESPONSE = "{\"status\": \"done\"}"
+        private const val DONE_STATUS_RESPONSE =
+            "{" +
+                "        \"status\": \"done\"," +
+                "        \"payload\": {\n" +
+                "        \"total\": 1598,\n" +
+                "        \"receipt_datetime\": \"12.04.2017 20:16:00\",\n" +
+                "        \"ofd_receipt_url\": \"https://consumer.1-ofd.ru/v1?fn=9288000100014915&fp=3004144185&i=108&t=20180522T122800&s=4500.00&n=1\"\n" +
+                "      }}"
         private const val NULL_STATUS_RESPONSE = "{\"status\": \"null\"}"
 
         private val testCredentials = Credentials(GROUP_CODE, "pass")
@@ -161,9 +168,9 @@ class AtolServiceTest : AtolTests() {
             .get { urlPath equalTo getStatusPath }
             .returnsJson { body = WAIT_STATUS_RESPONSE }
 
-        val status = atolService.getStatus(receipt, testCredentials)
+        val status = atolService.getResult(receipt, testCredentials)
 
-        assertThat(status).isEqualTo(ReceiptState.WAIT)
+        assertThat(status.status).isEqualTo(ReceiptState.WAIT)
     }
 
     @Test
@@ -173,9 +180,9 @@ class AtolServiceTest : AtolTests() {
             .get { urlPath equalTo getStatusPath }
             .returnsJson { body = DONE_STATUS_RESPONSE }
 
-        val status = atolService.getStatus(receipt, testCredentials)
+        val status = atolService.getResult(receipt, testCredentials)
 
-        assertThat(status).isEqualTo(ReceiptState.DONE)
+        assertThat(status.status).isEqualTo(ReceiptState.DONE)
     }
 
     @Test
@@ -186,7 +193,7 @@ class AtolServiceTest : AtolTests() {
             .returnsJson { body = NULL_STATUS_RESPONSE }
 
         assertThrows<InnerException> {
-            atolService.getStatus(receipt, testCredentials)
+            atolService.getResult(receipt, testCredentials)
         }
     }
 

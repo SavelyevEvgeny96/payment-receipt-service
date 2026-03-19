@@ -19,11 +19,11 @@ import java.util.UUID
 class ReceiptPayment(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    var id: UUID? = null,
-    var sum: BigDecimal? = null,
+    var id: UUID?,
+    var sum: BigDecimal?,
     @Enumerated(EnumType.STRING)
-    var paymentType: PaymentType? = null,
+    var paymentType: PaymentType?,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receipt_id", nullable = false)
-    var receipt: Receipt? = null,
+    var receipt: Receipt?,
 )

@@ -7,8 +7,9 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.exceptionStarter.starter.service.impl.CustomPaymentReceiptErrors.Companion.CODE_ERROR_UPDATE_STATUS_ID_NOT_FOUND
 import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentReceiptService.dao.ReceiptDao
+import ru.sogaz.site.paymentReceiptService.mapper.atol.AtolResponseMapper
+import ru.sogaz.site.paymentReceiptService.model.atol.response.AtolResultResponse
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
-import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptStatusRequest
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptUpdateRequest
 import ru.sogaz.site.paymentReceiptService.orThrow
@@ -22,6 +23,7 @@ class ReceiptStatusServiceImpl(
     private val receiptDao: ReceiptDao,
     private val atolService: AtolService,
     private val credentialsManager: CredentialsManager,
+    private val atolResponseMapper: AtolResponseMapper,
 ) : ReceiptStatusService {
     companion object {
         private const val EMPTY_EXTERNAL_ID_MESSAGE = "Для чека не указан externalId"
@@ -42,18 +44,19 @@ class ReceiptStatusServiceImpl(
 
     override fun updateStatusFromAtol(receipt: Receipt): Receipt =
         receipt
-            .apply { state = getAtolReceiptStatus(this) }
+            .fillFromResult(::getAtolReceiptResult)
             .run(receiptDao::save)
 
-    private fun getAtolReceiptStatus(receipt: Receipt): ReceiptState =
+    private fun getAtolReceiptResult(receipt: Receipt): AtolResultResponse =
         receipt
             .also(::checkExternalId)
             .run(credentialsManager::findCredentials)
-            .run { atolService.getStatus(receipt, this) }
+            .run { atolService.getResult(receipt, this) }
 
     private fun checkExternalId(receipt: Receipt) {
-        if (receipt.externalId == null) {
-            throw InnerException(getTraceId(), EMPTY_EXTERNAL_ID_MESSAGE)
-        }
+        requireNotNull(receipt.externalId) { EMPTY_EXTERNAL_ID_MESSAGE }
     }
+
+    private fun Receipt.fillFromResult(getResultBlock: Receipt.() -> AtolResultResponse): Receipt =
+        atolResponseMapper.fillReceiptFromResult(this, getResultBlock())
 }

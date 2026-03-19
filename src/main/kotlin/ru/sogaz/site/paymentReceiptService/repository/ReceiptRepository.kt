@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.Optional
 import java.util.UUID
 
@@ -21,7 +21,7 @@ interface ReceiptRepository : JpaRepository<Receipt, UUID> {
 
     fun findByStateAndDateSendBetween(
         state: ReceiptState,
-        startTime: LocalDateTime,
-        endTime: LocalDateTime,
+        startTime: Instant,
+        endTime: Instant,
     ): List<Receipt>
 }

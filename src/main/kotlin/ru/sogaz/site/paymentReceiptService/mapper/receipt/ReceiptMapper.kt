@@ -8,7 +8,7 @@ import org.mapstruct.MappingTarget
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptCreateRequest
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.UUID
 
 @Mapper(uses = [ReceiptItemMapper::class, ReceiptPaymentMapper::class], imports = [ReceiptState::class])
@@ -36,6 +36,6 @@ abstract class ReceiptMapper {
         receipt.apply {
             externalId = uuid
             state = ReceiptState.WAIT.butIf(uuid == null) { ReceiptState.FAIL }
-            dateSend = LocalDateTime.now().takeIf { uuid != null }
+            dateSend = Instant.now().takeIf { uuid != null }
         }
 }

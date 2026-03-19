@@ -20,17 +20,17 @@ import java.util.UUID
 class ReceiptItem(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    var id: UUID? = null,
-    var name: String? = null,
-    var price: BigDecimal? = null,
-    var quantity: BigDecimal? = null,
-    var sum: BigDecimal? = null,
-    var paymentObject: String? = null,
+    var id: UUID?,
+    var name: String?,
+    var price: BigDecimal?,
+    var quantity: BigDecimal?,
+    var sum: BigDecimal?,
+    var paymentObject: String?,
     @Enumerated(EnumType.STRING)
-    var paymentMethod: PaymentMethod? = null,
+    var paymentMethod: PaymentMethod?,
     @Enumerated(EnumType.STRING)
-    var vatType: VatType? = null,
+    var vatType: VatType?,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receipt_id", nullable = false)
-    var receipt: Receipt? = null,
+    var receipt: Receipt?,
 )

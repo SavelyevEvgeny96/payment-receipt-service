@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestHeader
 import ru.sogaz.site.paymentReceiptService.model.atol.request.AtolRequest
 import ru.sogaz.site.paymentReceiptService.model.atol.request.AtolTokenRequest
 import ru.sogaz.site.paymentReceiptService.model.atol.response.AtolResponse
-import ru.sogaz.site.paymentReceiptService.model.atol.response.AtolStatusResponse
+import ru.sogaz.site.paymentReceiptService.model.atol.response.AtolResultResponse
 import ru.sogaz.site.paymentReceiptService.model.atol.response.TokenResponse
 import java.util.UUID
 
@@ -40,5 +40,5 @@ interface AtolClient {
     fun getStatus(
         @RequestHeader token: String,
         @PathVariable externalId: UUID,
-    ): AtolStatusResponse
+    ): AtolResultResponse
 }

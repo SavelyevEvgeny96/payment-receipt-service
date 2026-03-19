@@ -9,9 +9,9 @@ import ru.sogaz.site.filterStarter.services.RequestInfo.getTraceId
 import ru.sogaz.site.paymentReceiptService.clients.AtolClient
 import ru.sogaz.site.paymentReceiptService.mapper.atol.AtolMapper
 import ru.sogaz.site.paymentReceiptService.model.atol.response.AtolResponse
+import ru.sogaz.site.paymentReceiptService.model.atol.response.AtolResultResponse
 import ru.sogaz.site.paymentReceiptService.model.credential.Credentials
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
-import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
 import ru.sogaz.site.paymentReceiptService.properties.AtolProperties
 import ru.sogaz.site.paymentReceiptService.service.atol.AtolAuthService
 import ru.sogaz.site.paymentReceiptService.service.atol.AtolService
@@ -47,16 +47,14 @@ class AtolServiceImpl(
             throw InnerException(getTraceId(), ex.message)
         }
 
-    override fun getStatus(
+    override fun getResult(
         receipt: Receipt,
         credentials: Credentials,
-    ): ReceiptState =
+    ): AtolResultResponse =
         try {
             val atolToken = atolAuthService.getToken(credentials)
             val externalId = requireNotNull(receipt.externalId) { EMPTY_EXTERNAL_ID_MESSAGE }
-            atolClient
-                .getStatus(atolToken, externalId)
-                .status
+            atolClient.getStatus(atolToken, externalId)
         } catch (ex: Exception) {
             throw InnerException(getTraceId(), ex.message)
         }

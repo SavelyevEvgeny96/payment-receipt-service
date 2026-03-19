@@ -5,7 +5,7 @@ import ru.sogaz.site.paymentReceiptService.dao.ReceiptDao
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
 import ru.sogaz.site.paymentReceiptService.repository.ReceiptRepository
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
 
@@ -23,7 +23,7 @@ class ReceiptDaoImpl(
 
     override fun findByStatusAndDateSendBetween(
         state: ReceiptState,
-        startTime: LocalDateTime,
-        endTime: LocalDateTime,
+        startTime: Instant,
+        endTime: Instant,
     ): List<Receipt> = repository.findByStateAndDateSendBetween(state, startTime, endTime)
 }
