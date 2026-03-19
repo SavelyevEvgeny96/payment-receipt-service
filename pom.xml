@@ -297,6 +297,9 @@
 					</args>
 					<compilerPlugins>
 						<plugin>spring</plugin>
+                        <plugin>jpa</plugin>
+                        <plugin>all-open</plugin>
+                        <plugin>no-arg</plugin>
 					</compilerPlugins>
 					<!-- Подключаем mapstruct-processor тут, а не в maven-compiler-plugin -->
 					<annotationProcessorPaths>

@@ -9,7 +9,8 @@ import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
 import ru.sogaz.site.paymentReceiptService.producer.ReceiptEventsProducer
 import ru.sogaz.site.paymentReceiptService.service.receipt.ReceiptStatusService
-import java.time.LocalDateTime
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 @Component
 class ScheduledJobService(
@@ -28,6 +29,7 @@ class ScheduledJobService(
     @SchedulerLock(
         name = "checkAtolStatuses",
         lockAtLeastFor = "PT30S",
+        lockAtMostFor = "PT3M",
     )
     fun checkAtolStatuses() =
         findDocumentForUpdateStatus()
@@ -37,9 +39,9 @@ class ScheduledJobService(
 
     private fun findDocumentForUpdateStatus(): List<Receipt> =
         try {
-            val now = LocalDateTime.now()
-            val startTime = now.minusDays(OLDEST_RECEIPTS_DAYS)
-            val endTime = now.minusMinutes(NEWEST_RECEIPTS_MINUTES)
+            val now = Instant.now()
+            val startTime = now.minus(OLDEST_RECEIPTS_DAYS, ChronoUnit.DAYS)
+            val endTime = now.minus(NEWEST_RECEIPTS_MINUTES, ChronoUnit.MINUTES)
 
             receiptDao.findByStatusAndDateSendBetween(ReceiptState.WAIT, startTime, endTime)
         } catch (ex: Exception) {

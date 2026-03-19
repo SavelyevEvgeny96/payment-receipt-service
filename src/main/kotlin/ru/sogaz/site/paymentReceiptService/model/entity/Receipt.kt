@@ -18,7 +18,7 @@ import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptSystem
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptType
 import java.math.BigDecimal
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.UUID
 
 @Entity
@@ -26,27 +26,29 @@ import java.util.UUID
 data class Receipt(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    var id: UUID? = null,
-    var paymentId: UUID? = null,
-    var orderId: UUID? = null,
+    var id: UUID?,
+    var paymentId: UUID,
+    var orderId: UUID?,
+    var link: String?,
     @Enumerated(EnumType.STRING)
-    var state: ReceiptState = ReceiptState.NEW,
+    var state: ReceiptState,
     @Enumerated(EnumType.STRING)
-    var receiptSystem: ReceiptSystem? = null,
+    var receiptSystem: ReceiptSystem?,
     @Enumerated(EnumType.STRING)
-    var receiptType: ReceiptType? = null,
-    var externalId: UUID? = null,
-    var product: String? = null,
-    var channel: String? = null,
-    var total: BigDecimal? = null,
-    var clientEmail: String? = null,
-    var clientPhone: String? = null,
-    var depersonalization: Boolean = false,
-    var dateSend: LocalDateTime? = null,
+    var receiptType: ReceiptType,
+    var externalId: UUID?,
+    var product: String?,
+    var channel: String?,
+    var total: BigDecimal,
+    var clientEmail: String?,
+    var clientPhone: String?,
+    var depersonalization: Boolean,
+    var dateSend: Instant?,
+    var sendingTime: Instant?,
     @CreationTimestamp
-    var dateCreate: LocalDateTime? = null,
+    var dateCreate: Instant?,
     @UpdateTimestamp
-    var dateUpdate: LocalDateTime? = null,
+    var dateUpdate: Instant?,
 ) {
     @OneToMany(cascade = [(CascadeType.ALL)], fetch = FetchType.LAZY, mappedBy = "receipt")
     @Fetch(FetchMode.SUBSELECT)

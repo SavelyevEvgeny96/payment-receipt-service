@@ -21,6 +21,11 @@
     "jsonBody": {
       "uuid": "{{randomValue type='UUID'}}",
       "timestamp": "{{now}}",
+      "payload": {
+        "total": 1598,
+        "receipt_datetime": "12.04.2017 20:16:00",
+        "ofd_receipt_url": "https://consumer.1-ofd.ru/v1?fn=9288000100014915&fp=3004144185&i=108&t=20180522T122800&s=4500.00&n=1"
+      },
       "error": null,
       "status": "done"
     }

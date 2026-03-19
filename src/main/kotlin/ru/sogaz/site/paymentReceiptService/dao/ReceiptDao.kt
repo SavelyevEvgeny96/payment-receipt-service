@@ -2,7 +2,7 @@ package ru.sogaz.site.paymentReceiptService.dao
 
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.UUID
 
 interface ReceiptDao {
@@ -16,7 +16,7 @@ interface ReceiptDao {
 
     fun findByStatusAndDateSendBetween(
         state: ReceiptState,
-        startTime: LocalDateTime,
-        endTime: LocalDateTime,
+        startTime: Instant,
+        endTime: Instant,
     ): List<Receipt>
 }

@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "urlPathPattern": "/possystem/v4/.*/sell",
+    "urlPathPattern": "/possystem/v4/.*/.*",
     "headers": {
       "Content-Type": {
         "matches": "application/json.*"

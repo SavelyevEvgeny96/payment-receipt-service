@@ -1,6 +1,5 @@
 package ru.sogaz.site.paymentReceiptService.mapper.atol
 
-import org.mapstruct.AfterMapping
 import org.mapstruct.Context
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -25,12 +24,12 @@ abstract class AtolMapper {
     @Mapping(target = "externalId", source = "receipt.id")
     @Mapping(target = "service", expression = "java( atolProperties.getCallback() )")
     @Mapping(target = "receipt", source = ".")
+    @Mapping(target = "timestamp", expression = "java( localDateTimeToFormattedString() )")
     abstract fun mapRequest(
         receipt: Receipt,
         @Context atolProperties: AtolProperties,
     ): AtolRequest
 
-    @AfterMapping
     protected fun fillAtolRequestTimestamp(
         @MappingTarget atolRequest: AtolRequest,
     ): AtolRequest =
@@ -38,7 +37,7 @@ abstract class AtolMapper {
             timestamp = localDateTimeToFormattedString()
         }
 
-    private fun localDateTimeToFormattedString(): String =
+    protected fun localDateTimeToFormattedString(): String =
         LocalDateTime
             .now()
             .atZone(ZoneOffset.UTC)

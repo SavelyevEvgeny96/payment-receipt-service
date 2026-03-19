@@ -4,30 +4,30 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.junit5.MockKExtension
-import io.mockk.slot
 import io.mockk.verify
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.BusinessException
-import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentReceiptService.dao.ReceiptDao
+import ru.sogaz.site.paymentReceiptService.mapper.atol.AtolResponseMapper
+import ru.sogaz.site.paymentReceiptService.mapper.atol.AtolResponseMapperImpl
+import ru.sogaz.site.paymentReceiptService.model.atol.response.AtolResultResponse
 import ru.sogaz.site.paymentReceiptService.model.credential.Credentials
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
-import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
-import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptSystem
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptStatusRequest
 import ru.sogaz.site.paymentReceiptService.model.web.request.PaymentReceiptUpdateRequest
 import ru.sogaz.site.paymentReceiptService.service.atol.AtolService
 import ru.sogaz.site.paymentReceiptService.service.credentials.CredentialsManager
 import ru.sogaz.site.paymentReceiptService.service.receipt.impl.ReceiptStatusServiceImpl
-import java.math.BigDecimal
 import java.util.UUID
 
 @ExtendWith(MockKExtension::class, SpringExtension::class)
+@Import(value = [AtolResponseMapperImpl::class])
 class ReceiptStatusServiceTests {
     companion object {
         private val testCredentials = Credentials("login", "pass")
@@ -42,13 +42,22 @@ class ReceiptStatusServiceTests {
     @MockK
     lateinit var credentialsManager: CredentialsManager
 
+    @Autowired
+    lateinit var atolResponseMapper: AtolResponseMapper
+
     private lateinit var receiptStatusService: ReceiptStatusServiceImpl
 
     @RelaxedMockK
     private lateinit var paymentReceiptStatusRequest: PaymentReceiptStatusRequest
 
+    @RelaxedMockK
     private lateinit var receipt: Receipt
+
+    @MockK
     private lateinit var receiptWithoutExternalId: Receipt
+
+    @RelaxedMockK
+    private lateinit var atolResultResponse: AtolResultResponse
 
     private val validExternalIdUUID: UUID = UUID.randomUUID()
     private val invalidExternalIdUUID: UUID = UUID.randomUUID()
@@ -59,9 +68,7 @@ class ReceiptStatusServiceTests {
     fun beforeEach() {
         receiptStatusService = initService()
 
-        receipt = createValidTestReceipt()
-        receiptWithoutExternalId = createInvalidTestReceipt()
-
+        every { receipt.externalId } returns validExternalIdUUID
         every { receiptDao.findByExternalId(validExternalIdUUID) } returns receipt
         every { receiptDao.findByExternalId(invalidExternalIdUUID) } returns null
         every { receiptDao.findByOrderId(validExternalIdUUID) } returns receipt
@@ -72,16 +79,12 @@ class ReceiptStatusServiceTests {
 
     @Test
     fun `setStatus should update receipt state from request`() {
-        val receiptSlot = slot<Receipt>()
-        val state = ReceiptState.DONE
-        every { paymentReceiptStatusRequest.status } returns state
         every { paymentReceiptStatusRequest.externalId } returns validExternalIdUUID
 
         receiptStatusService.setStatus(paymentReceiptStatusRequest)
 
-        verify { receiptDao.save(capture(receiptSlot)) }
-        assertThat(receiptSlot.captured)
-            .returns(state, Receipt::state)
+        verify { receipt.state = paymentReceiptStatusRequest.status }
+        verify { receiptDao.save(receipt) }
     }
 
     @Test
@@ -95,70 +98,44 @@ class ReceiptStatusServiceTests {
 
     @Test
     fun `updateStatusFromAtol should update receipt state by request`() {
-        val receiptSlot = slot<Receipt>()
-        val state = ReceiptState.DONE
-        every { atolService.getStatus(any(), any()) } returns state
+        every { atolService.getResult(any(), any()) } returns atolResultResponse
 
         val receipt = receiptStatusService.updateStatusFromAtol(validUpdateRequest)
 
-        assertThat(receipt.state)
-            .isEqualTo(state)
-
-        verify { receiptDao.save(capture(receiptSlot)) }
-        assertThat(receiptSlot.captured)
-            .returns(state, Receipt::state)
+        verify { receipt.state = atolResultResponse.status }
+        verify { receipt.link = atolResultResponse.payload?.ofdReceiptUrl }
+        verify { receiptDao.save(receipt) }
     }
 
     @Test
     fun `updateStatusFromAtol should update receipt state by receipt`() {
-        val state = ReceiptState.DONE
-        every { atolService.getStatus(any(), any()) } returns state
+        every { atolService.getResult(any(), any()) } returns atolResultResponse
 
-        val updatedReceipt = receiptStatusService.updateStatusFromAtol(receipt)
+        receiptStatusService.updateStatusFromAtol(receipt)
 
-        assertThat(updatedReceipt)
-            .returns(state, Receipt::state)
+        verify { receipt.state = atolResultResponse.status }
+        verify { receipt.link = atolResultResponse.payload?.ofdReceiptUrl }
+        verify { receiptDao.save(receipt) }
     }
 
     @Test
     fun `updateStatusFromAtol should thrown an error when receipt without externalId`() {
-        assertThrows<InnerException> {
-            receiptStatusService.updateStatusFromAtol(receiptWithoutExternalId)
+        every { receipt.externalId } returns null
+
+        assertThrows<IllegalArgumentException> {
+            receiptStatusService.updateStatusFromAtol(receipt)
         }
+
+        verify(exactly = 0) { credentialsManager.findCredentials(receipt) }
+        verify(exactly = 0) { atolService.getResult(receipt, any()) }
+        verify(exactly = 0) { receiptDao.save(receipt) }
     }
-
-    private fun createValidTestReceipt() =
-        createTestReceipt()
-            .apply {
-                externalId = validExternalIdUUID
-            }
-
-    private fun createInvalidTestReceipt() =
-        createTestReceipt()
-            .apply {
-                externalId = null
-            }
-
-    private fun createTestReceipt() =
-        Receipt(
-            id = UUID.randomUUID(),
-            orderId = UUID.randomUUID(),
-            state = ReceiptState.NEW,
-            receiptSystem = ReceiptSystem.ATOL,
-            externalId = validExternalIdUUID,
-            total = BigDecimal.TEN,
-            clientEmail = "",
-            clientPhone = "",
-            depersonalization = false,
-            dateSend = null,
-            dateCreate = null,
-            dateUpdate = null,
-        )
 
     private fun initService() =
         ReceiptStatusServiceImpl(
             atolService = atolService,
             receiptDao = receiptDao,
             credentialsManager = credentialsManager,
+            atolResponseMapper = atolResponseMapper,
         )
 }

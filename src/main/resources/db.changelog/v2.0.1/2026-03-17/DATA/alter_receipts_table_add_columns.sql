@@ -1,0 +1,3 @@
+ALTER TABLE receipts
+    ADD COLUMN sending_time TIMESTAMP,
+    ADD COLUMN link VARCHAR(255);

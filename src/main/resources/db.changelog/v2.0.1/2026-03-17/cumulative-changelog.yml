@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-002-refactor
+      author: Sokolov Danila
+      changes:
+        - tagDatabase:
+            tag: backend-002-refactor
+  - include:
+      file: db.changelog\v2.0.1\2026-03-17\DATA\alter_receipts_table_add_columns.sql

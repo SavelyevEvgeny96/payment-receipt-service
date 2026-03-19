@@ -1,6 +1,7 @@
 package ru.sogaz.site.paymentReceiptService.service.receipt
 
 import io.mockk.every
+import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -11,10 +12,8 @@ import ru.sogaz.site.exceptionStarter.starter.dto.exceptions.InnerException
 import ru.sogaz.site.paymentReceiptService.model.credential.Credentials
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
 import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
-import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptSystem
 import ru.sogaz.site.paymentReceiptService.model.event.ReceiptCreatedEvent
 import ru.sogaz.site.paymentReceiptService.model.exception.SendReceiptException
-import java.math.BigDecimal
 import java.util.UUID
 
 class ReceiptServiceSendReceiptTests : ReceiptServiceTests() {
@@ -22,6 +21,7 @@ class ReceiptServiceSendReceiptTests : ReceiptServiceTests() {
         private val testCredentials = Credentials("login", "pass")
     }
 
+    @RelaxedMockK
     private lateinit var receipt: Receipt
 
     private lateinit var validReceiptUUID: UUID
@@ -34,8 +34,6 @@ class ReceiptServiceSendReceiptTests : ReceiptServiceTests() {
 
     @BeforeEach
     fun beforeEach() {
-        receipt = createTestReceipt()
-
         validReceiptUUID = UUID.randomUUID()
         invalidReceiptUUID = UUID.randomUUID()
         validExternalIdUUID = UUID.randomUUID()
@@ -79,12 +77,9 @@ class ReceiptServiceSendReceiptTests : ReceiptServiceTests() {
         every { atolService.sendReceipt(receipt, testCredentials) } returns validExternalIdUUID
         every { receiptMapper.updateReceiptState(receipt, validExternalIdUUID) } answers { callOriginal() }
 
-        val sentReceipt = receiptService.sendReceipt(validCreatedEvent)
+        receiptService.sendReceipt(validCreatedEvent)
 
-        sentReceipt
-            .run(::assertThat)
-            .returns(ReceiptState.WAIT, Receipt::state)
-
+        verify { receipt.state = ReceiptState.WAIT }
         verify(exactly = 1) { receiptDao.findById(any()) }
         verify(exactly = 1) { atolService.sendReceipt(any(), testCredentials) }
         verify(exactly = 1) { receiptDao.save(receipt) }
@@ -95,30 +90,11 @@ class ReceiptServiceSendReceiptTests : ReceiptServiceTests() {
         every { atolService.sendReceipt(receipt, testCredentials) } returns null
         every { receiptMapper.updateReceiptState(receipt, null) } answers { callOriginal() }
 
-        val sentReceipt = receiptService.sendReceipt(validCreatedEvent)
+        receiptService.sendReceipt(validCreatedEvent)
 
-        sentReceipt
-            .run(::assertThat)
-            .returns(ReceiptState.FAIL, Receipt::state)
-
+        verify { receipt.state = ReceiptState.FAIL }
         verify(exactly = 1) { receiptDao.findById(any()) }
         verify(exactly = 1) { atolService.sendReceipt(any(), testCredentials) }
         verify(exactly = 1) { receiptDao.save(receipt) }
     }
-
-    private fun createTestReceipt() =
-        Receipt(
-            id = UUID.randomUUID(),
-            orderId = UUID.randomUUID(),
-            state = ReceiptState.NEW,
-            receiptSystem = ReceiptSystem.ATOL,
-            externalId = null,
-            total = BigDecimal.TEN,
-            clientEmail = "",
-            clientPhone = "",
-            depersonalization = false,
-            dateSend = null,
-            dateCreate = null,
-            dateUpdate = null,
-        )
 }

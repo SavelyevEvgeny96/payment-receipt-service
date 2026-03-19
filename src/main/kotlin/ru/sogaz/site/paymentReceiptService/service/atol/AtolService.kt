@@ -1,8 +1,8 @@
 package ru.sogaz.site.paymentReceiptService.service.atol
 
+import ru.sogaz.site.paymentReceiptService.model.atol.response.AtolResultResponse
 import ru.sogaz.site.paymentReceiptService.model.credential.Credentials
 import ru.sogaz.site.paymentReceiptService.model.entity.Receipt
-import ru.sogaz.site.paymentReceiptService.model.enums.ReceiptState
 import java.util.UUID
 
 interface AtolService {
@@ -11,8 +11,8 @@ interface AtolService {
         credentials: Credentials,
     ): UUID?
 
-    fun getStatus(
+    fun getResult(
         receipt: Receipt,
         credentials: Credentials,
-    ): ReceiptState
+    ): AtolResultResponse
 }
