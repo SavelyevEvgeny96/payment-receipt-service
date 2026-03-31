@@ -1,0 +1,1 @@
+INSERT INTO checkout_mappings(product, channel, login, password)VALUES('OSAGO','ALL', 'OSAGO_LOGIN', 'OSAGO_PASSWORD');
