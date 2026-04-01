@@ -14,7 +14,7 @@ data class AtolResultResponse(
 
 data class AtolResultPayload(
     @field:JsonProperty("receipt_datetime")
-    @field:JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss", timezone = "UTC")
+    @field:JsonFormat(pattern = "dd.MM.yyyy HH:mm:ss", timezone = "Europe/Moscow")
     val receiptDatetime: Instant,
     @field:JsonProperty("ofd_receipt_url")
     val ofdReceiptUrl: String,
