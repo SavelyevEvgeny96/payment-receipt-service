@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-002-refactor
+      author: Sokolov Danila
+      changes:
+        - tagDatabase:
+            tag: backend-002-refactor
+  - include:
+      file: db.changelog\v2.0.2\2026-03-31\DATA\insert_checkout_mappings.sql
