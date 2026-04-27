@@ -46,11 +46,12 @@ class AtolServiceTest : AtolTests() {
                 "        \"payload\": {\n" +
                 "        \"total\": 1598,\n" +
                 "        \"receipt_datetime\": \"12.04.2017 20:16:00\",\n" +
-                "        \"ofd_receipt_url\": \"https://consumer.1-ofd.ru/v1?fn=9288000100014915&fp=3004144185&i=108&t=20180522T122800&s=4500.00&n=1\"\n" +
+                "        \"ofd_receipt_url\": \"https://consumer.1-ofd.ru/v1?fn=9288000100014915&fp=3004144185&i=" +
+                "108&t=20180522T122800&s=4500.00&n=1\"\n" +
                 "      }}"
         private const val NULL_STATUS_RESPONSE = "{\"status\": \"null\"}"
 
-        private val testCredentials = Credentials(GROUP_CODE, "pass")
+        private val testCredentials = Credentials("login", "pass", GROUP_CODE)
         private val testCompanyData = CompanyData("email", "inn", "address", "depersonalizedAddress")
         private val testServiceData = ServiceData("url")
     }

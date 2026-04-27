@@ -3,7 +3,6 @@ package ru.sogaz.site.paymentReceiptService.service.receipt
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.verify
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -18,7 +17,7 @@ import java.util.UUID
 
 class ReceiptServiceSendReceiptTests : ReceiptServiceTests() {
     companion object {
-        private val testCredentials = Credentials("login", "pass")
+        private val testCredentials = Credentials("login", "pass", "group")
     }
 
     @RelaxedMockK

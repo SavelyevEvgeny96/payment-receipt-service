@@ -19,4 +19,3 @@ data class ReceiptSentEvent(
     @JsonGetter("typeOperation")
     fun getTypeOperation(): String = typeOperation.desc.uppercase()
 }
-

@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: backend-002.0.3-refactor
+      author: Savelyev Evgeny
+      changes:
+        - tagDatabase:
+            tag: backend-002.0.3-refactor
+  - include:
+      file: db.changelog\v2.0.3\2026-04-27\DATA\refactor_checkout_mappings.sql
