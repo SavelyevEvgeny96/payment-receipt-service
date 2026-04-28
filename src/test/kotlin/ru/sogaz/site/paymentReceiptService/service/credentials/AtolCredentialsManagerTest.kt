@@ -75,6 +75,7 @@ class AtolCredentialsManagerTest {
     fun `findCredentials should throw an error when env are empty`() {
         environment.remove("$PRODUCT_1$CHANNEL_1")
         environment.remove("$CHANNEL_1$PRODUCT_1")
+        environment.remove("${PRODUCT_1}${CHANNEL_1}GROUP")
 
         val ex =
             assertThrows<InnerException> {
@@ -104,6 +105,7 @@ class AtolCredentialsManagerTest {
             .isNotNull
             .returns("$ALL$ALL") { it?.login }
             .returns("$ALL$ALL") { it?.pass }
+            .returns("${ALL}${ALL}GROUP") { it?.groupCode }
     }
 
     @Test
@@ -114,6 +116,7 @@ class AtolCredentialsManagerTest {
             .isNotNull
             .returns("$ALL$ALL") { it?.login }
             .returns("$ALL$ALL") { it?.pass }
+            .returns("${ALL}${ALL}GROUP") { it?.groupCode }
     }
 
     @Test
@@ -124,6 +127,7 @@ class AtolCredentialsManagerTest {
             .isNotNull
             .returns("$PRODUCT_1$CHANNEL_1") { it?.login }
             .returns("$CHANNEL_1$PRODUCT_1") { it?.pass }
+            .returns("${PRODUCT_1}${CHANNEL_1}GROUP") { it?.groupCode }
     }
 
     @Test
@@ -134,6 +138,7 @@ class AtolCredentialsManagerTest {
             .isNotNull
             .returns("$PRODUCT_2$ALL") { it?.login }
             .returns("$ALL$PRODUCT_2") { it?.pass }
+            .returns("${PRODUCT_2}${ALL}GROUP") { it?.groupCode }
     }
 
     @Test
@@ -144,6 +149,7 @@ class AtolCredentialsManagerTest {
             .isNotNull
             .returns("$ALL$CHANNEL_3") { it?.login }
             .returns("$CHANNEL_3$ALL") { it?.pass }
+            .returns("${ALL}${CHANNEL_3}GROUP") { it?.groupCode }
     }
 
     @Test
@@ -154,6 +160,7 @@ class AtolCredentialsManagerTest {
             .isNotNull
             .returns("$PRODUCT_2$ALL") { it?.login }
             .returns("$ALL$PRODUCT_2") { it?.pass }
+            .returns("${PRODUCT_2}${ALL}GROUP") { it?.groupCode }
     }
 
     @Test
@@ -167,6 +174,7 @@ class AtolCredentialsManagerTest {
             .isNotNull
             .returns("$PRODUCT_1$CHANNEL_1") { it?.login }
             .returns("$CHANNEL_1$PRODUCT_1") { it?.pass }
+            .returns("${PRODUCT_1}${CHANNEL_1}GROUP") { it?.groupCode }
     }
 
     private fun initTestCheckoutMappings(): List<CheckoutMapping> =
@@ -187,6 +195,7 @@ class AtolCredentialsManagerTest {
         channel = channel,
         login = "$product$channel",
         password = "$channel$product",
+        groupCode = "${product}${channel}GROUP",
     )
 
     private fun initEnv(checkouts: List<CheckoutMapping>) {
@@ -196,6 +205,7 @@ class AtolCredentialsManagerTest {
     private fun initEnv(checkoutMapping: CheckoutMapping) {
         environment.set(checkoutMapping.login, checkoutMapping.login)
         environment.set(checkoutMapping.password, checkoutMapping.password)
+        environment.set(checkoutMapping.groupCode, checkoutMapping.groupCode)
     }
 
     private fun initManager() =

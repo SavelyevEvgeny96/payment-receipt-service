@@ -17,4 +17,5 @@ data class CheckoutMapping(
     var channel: String? = null,
     var login: String? = null,
     var password: String? = null,
+    var groupCode: String? = null,
 )

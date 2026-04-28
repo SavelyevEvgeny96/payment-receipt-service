@@ -23,6 +23,7 @@ class CredentialsEncryptorImpl : CredentialsEncryptor {
             Credentials(
                 login = checkoutMapping.decryptLogin(),
                 pass = checkoutMapping.decryptPassword(),
+                groupCode = checkoutMapping.decryptGroupCode(),
             )
         } catch (ex: Exception) {
             logger.error(ENCRYPT_ERROR_MESSAGE, ex)
@@ -30,6 +31,8 @@ class CredentialsEncryptorImpl : CredentialsEncryptor {
         }
 
     private fun CheckoutMapping.decryptLogin(): String = System.getenv(login)
+
+    private fun CheckoutMapping.decryptGroupCode(): String = System.getenv(groupCode)
 
     private fun CheckoutMapping.decryptPassword(): String = System.getenv(password)
 }

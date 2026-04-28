@@ -30,7 +30,7 @@ import java.util.UUID
 @Import(value = [AtolResponseMapperImpl::class])
 class ReceiptStatusServiceTests {
     companion object {
-        private val testCredentials = Credentials("login", "pass")
+        private val testCredentials = Credentials("login", "pass", "group")
     }
 
     @MockK
