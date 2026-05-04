@@ -17,7 +17,7 @@ class ReceiptCreatedEventConsumer(
     private val receiptService: ReceiptService,
 ) {
     companion object {
-        private const val SEND_RECEIPT_ERROR_MESSAGE = "Возникла ошибка при отправке чека"
+        private const val SEND_RECEIPT_ERROR_MESSAGE = "Возникла ошибка при отправке чека {}"
     }
 
     private val logger = loggerFor(javaClass)
@@ -33,7 +33,10 @@ class ReceiptCreatedEventConsumer(
         try {
             receiptService.sendReceipt(message)
         } catch (ex: SendReceiptException) {
-            logger.warn(SEND_RECEIPT_ERROR_MESSAGE, ex)
+            logger.warn(SEND_RECEIPT_ERROR_MESSAGE, ex.message, ex)
+        } catch (ex: Exception) {
+            logger.error(SEND_RECEIPT_ERROR_MESSAGE, ex.message, ex)
+            throw ex
         }
     }
 
