@@ -15,7 +15,8 @@ class ReceiptRequestedEventConsumer(
     private val receiptService: ReceiptService,
 ) {
     companion object {
-        private const val CREATE_RECEIPT_ERROR_MESSAGE = "Возникла ошибка уникальности при создании чека для отправки"
+        private const val CREATE_RECEIPT_ERROR_MESSAGE = "Возникла ошибка при создании чека {}"
+        private const val CREATE_RECEIPT_INTEGRITY_ERROR_MESSAGE = "Возникла ошибка уникальности при создании чека для отправки"
     }
 
     private val logger = loggerFor(javaClass)
@@ -30,7 +31,10 @@ class ReceiptRequestedEventConsumer(
         try {
             receiptService.createReceipt(message)
         } catch (_: DataIntegrityViolationException) {
-            logger.warn(CREATE_RECEIPT_ERROR_MESSAGE)
+            logger.warn(CREATE_RECEIPT_INTEGRITY_ERROR_MESSAGE)
+        } catch (ex: Exception) {
+            logger.error(CREATE_RECEIPT_ERROR_MESSAGE, ex.message, ex)
+            throw ex
         }
         }
 }
