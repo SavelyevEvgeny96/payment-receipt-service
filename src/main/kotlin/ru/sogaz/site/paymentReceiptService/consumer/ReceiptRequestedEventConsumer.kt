@@ -32,5 +32,5 @@ class ReceiptRequestedEventConsumer(
         } catch (_: DataIntegrityViolationException) {
             logger.warn(CREATE_RECEIPT_ERROR_MESSAGE)
         }
-    }
+        }
 }
