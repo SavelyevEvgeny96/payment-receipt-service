@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling
 
 @EnableScheduling
 @SpringBootApplication
-@EnableFeignClients(basePackages = ["ru.sogaz.site.paymentReceiptService.clients"])
+@EnableFeignClients(basePackages = ["ru.sogaz.site.paymentReceiptService.clients", "ru.sogaz.site.paymentReceiptService.taxcom.client"])
 @ConfigurationPropertiesScan("ru.sogaz.site.paymentReceiptService.properties")
 open class KotlinTemplateApplication
 
