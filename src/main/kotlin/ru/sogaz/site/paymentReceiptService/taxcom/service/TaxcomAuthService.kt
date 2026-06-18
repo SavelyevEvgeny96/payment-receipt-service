@@ -9,7 +9,7 @@ import ru.sogaz.site.paymentReceiptService.taxcom.config.TaxcomProperties
 import ru.sogaz.site.paymentReceiptService.taxcom.model.TaxcomLoginRequest
 
 @Service
-@ConditionalOnProperty(prefix = "taxcom.job", name = ["enabled"], havingValue = "true")
+@ConditionalOnProperty(prefix = "taxcom.export", name = ["enabled"], havingValue = "true")
 class TaxcomAuthService(
     private val taxcomClient: TaxcomClient,
     private val taxcomProperties: TaxcomProperties,

@@ -19,7 +19,7 @@ import ru.sogaz.site.paymentReceiptService.taxcom.model.TaxcomShiftListResponse
 import java.time.LocalDateTime
 import java.util.UUID
 
-@ConditionalOnProperty(prefix = "taxcom.job", name = ["enabled"], havingValue = "true")
+@ConditionalOnProperty(prefix = "taxcom.export", name = ["enabled"], havingValue = "true")
 @FeignClient(
     name = "taxcom-client",
     url = "\${taxcom.api.base-url}",

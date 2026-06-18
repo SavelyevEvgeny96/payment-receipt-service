@@ -143,7 +143,7 @@ taxcom:
     username: ${TAXCOM_DB_USERNAME:sa}
     password: ${TAXCOM_DB_PASSWORD:}
     driver-class-name: ${TAXCOM_DB_DRIVER:com.microsoft.sqlserver.jdbc.SQLServerDriver}
-  job:
-    enabled: ${TAXCOM_JOB_ENABLED:false}
-    begin: ${TAXCOM_JOB_BEGIN:2020-01-01T00:00:00}
-    batch-size: ${TAXCOM_JOB_BATCH_SIZE:500}
+  export:
+    enabled: ${TAXCOM_EXPORT_ENABLED:false}
+    begin: ${TAXCOM_EXPORT_BEGIN:2020-01-01T00:00:00}
+    batch-size: ${TAXCOM_EXPORT_BATCH_SIZE:500}

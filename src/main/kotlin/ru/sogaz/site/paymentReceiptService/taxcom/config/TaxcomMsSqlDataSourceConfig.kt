@@ -13,7 +13,7 @@ import org.springframework.transaction.PlatformTransactionManager
 import javax.sql.DataSource
 
 @Configuration
-@ConditionalOnProperty(prefix = "taxcom.job", name = ["enabled"], havingValue = "true")
+@ConditionalOnProperty(prefix = "taxcom.export", name = ["enabled"], havingValue = "true")
 @EnableConfigurationProperties(TaxcomProperties::class)
 class TaxcomMsSqlDataSourceConfig(
     private val taxcomProperties: TaxcomProperties,

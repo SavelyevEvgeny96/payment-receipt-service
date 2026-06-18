@@ -1,8 +1,8 @@
 package ru.sogaz.site.paymentReceiptService.taxcom.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -164,5 +164,18 @@ data class TaxcomReceiptRow(
 
 data class TaxcomRunResponse(
     val accepted: Boolean,
+    val status: TaxcomExportStatusResponse,
+)
+
+data class TaxcomExportStatusResponse(
     val status: String,
+    val running: Boolean,
+    val currentStage: String?,
+    val startedAt: Instant?,
+    val finishedAt: Instant?,
+    val processedOutlets: Long,
+    val processedKkt: Long,
+    val processedShifts: Long,
+    val processedReceipts: Long,
+    val lastError: String?,
 )

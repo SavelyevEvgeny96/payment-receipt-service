@@ -7,7 +7,7 @@ import java.time.LocalDateTime
 class TaxcomProperties {
     var api: Api = Api()
     var datasource: Datasource = Datasource()
-    var job: Job = Job()
+    var export: Export = Export()
 
     class Api {
         lateinit var baseUrl: String
@@ -23,7 +23,7 @@ class TaxcomProperties {
         var driverClassName: String = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
     }
 
-    class Job {
+    class Export {
         var enabled: Boolean = false
         var begin: LocalDateTime = LocalDateTime.of(2020, 1, 1, 0, 0)
         var batchSize: Int = 500

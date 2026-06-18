@@ -19,7 +19,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @Repository
-@ConditionalOnProperty(prefix = "taxcom.job", name = ["enabled"], havingValue = "true")
+@ConditionalOnProperty(prefix = "taxcom.export", name = ["enabled"], havingValue = "true")
 class TaxcomJdbcRepository(
     private val taxcomJdbcTemplate: JdbcTemplate,
     private val objectMapper: ObjectMapper,

@@ -11,7 +11,7 @@ import ru.sogaz.site.paymentReceiptService.taxcom.service.TaxcomExportService
 
 @RestController
 @RequestMapping("/internal/taxcom-export")
-@ConditionalOnProperty(prefix = "taxcom.job", name = ["enabled"], havingValue = "true")
+@ConditionalOnProperty(prefix = "taxcom.export", name = ["enabled"], havingValue = "true")
 class TaxcomExportController(
     private val taxcomExportService: TaxcomExportService,
 ) {
