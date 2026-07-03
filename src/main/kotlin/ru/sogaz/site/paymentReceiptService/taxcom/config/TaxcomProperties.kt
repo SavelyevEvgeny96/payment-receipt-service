@@ -8,6 +8,7 @@ class TaxcomProperties {
     var api: Api = Api()
     var datasource: Datasource = Datasource()
     var export: Export = Export()
+    var proxy: Proxy = Proxy()
 
     class Api {
         lateinit var baseUrl: String
@@ -20,12 +21,19 @@ class TaxcomProperties {
         lateinit var url: String
         lateinit var username: String
         lateinit var password: String
-        var driverClassName: String = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
     }
 
     class Export {
         var enabled: Boolean = false
         var begin: LocalDateTime = LocalDateTime.of(2020, 1, 1, 0, 0)
         var batchSize: Int = 500
+        var documentPageSize: Int = 1000
+        var maxAttempts: Int = 3
+    }
+
+    class Proxy {
+        var enabled: Boolean = false
+        var host: String = ""
+        var port: Int = 0
     }
 }

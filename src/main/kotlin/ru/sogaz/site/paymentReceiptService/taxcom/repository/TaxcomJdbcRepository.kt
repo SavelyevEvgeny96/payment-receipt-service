@@ -28,63 +28,64 @@ class TaxcomJdbcRepository(
         DDL.forEach(taxcomJdbcTemplate::execute)
     }
 
-    fun upsertOutlets(records: List<TaxcomOutletRecord>) = records.forEach { record ->
+    fun insertOutletsIfMissing(records: List<TaxcomOutletRecord>) = records.forEach { record ->
         taxcomJdbcTemplate.update(
             """
-            MERGE list_outlets AS target
-            USING (SELECT ? AS id, ? AS name) AS source
-            ON target.id = source.id
-            WHEN MATCHED THEN UPDATE SET name = source.name, date_update = SYSUTCDATETIME()
-            WHEN NOT MATCHED THEN INSERT (id, name, data_uploaded, date_create, date_update)
-            VALUES (source.id, source.name, 0, SYSUTCDATETIME(), SYSUTCDATETIME());
+            INSERT INTO list_outlets (id, name, data_uploaded, date_create, date_update)
+            SELECT ?, ?, 0, SYSUTCDATETIME(), SYSUTCDATETIME()
+            WHERE NOT EXISTS (SELECT 1 FROM list_outlets WHERE id = ?)
             """.trimIndent(),
-            record.id,
+            record.id.toDbId(),
             record.name,
+            record.id.toDbId(),
         )
     }
 
-    fun findPendingOutlets(limit: Int): List<TaxcomOutletRow> =
+    fun findPendingOutlets(limit: Int, maxAttempts: Int): List<TaxcomOutletRow> =
         taxcomJdbcTemplate.query(
-            "SELECT TOP (?) id, name FROM list_outlets WHERE data_uploaded = 0 ORDER BY date_create",
+            "SELECT TOP (?) id, name FROM list_outlets WHERE data_uploaded = 0 AND load_attempts < ? ORDER BY date_create",
             { rs, _ -> TaxcomOutletRow(UUID.fromString(rs.getString("id")), rs.getString("name")) },
             limit,
+            maxAttempts,
         )
 
-    fun upsertKkt(outletId: UUID, records: List<TaxcomKktRecord>) = records.forEach { record ->
+    fun insertKktIfMissing(outletId: UUID, records: List<TaxcomKktRecord>) = records.forEach { record ->
         taxcomJdbcTemplate.update(
             """
-            MERGE list_kkt AS target
-            USING (SELECT ? AS list_outlets_id, ? AS num_fn, ? AS name) AS source
-            ON target.list_outlets_id = source.list_outlets_id AND target.num_fn = source.num_fn
-            WHEN MATCHED THEN UPDATE SET name = source.name, date_update = SYSUTCDATETIME()
-            WHEN NOT MATCHED THEN INSERT (id, list_outlets_id, name, num_fn, data_uploaded, date_create, date_update)
-            VALUES (NEWID(), source.list_outlets_id, source.name, source.num_fn, 0, SYSUTCDATETIME(), SYSUTCDATETIME());
+            INSERT INTO list_kkt (id, list_outlets_id, name, num_fn, data_uploaded, date_create, date_update)
+            SELECT CONVERT(varchar(36), NEWID()), ?, ?, ?, 0, SYSUTCDATETIME(), SYSUTCDATETIME()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM list_kkt WHERE list_outlets_id = ? AND num_fn = ?
+            )
             """.trimIndent(),
-            outletId,
-            record.fnFactoryNumber,
+            outletId.toDbId(),
             record.name,
+            record.fnFactoryNumber,
+            outletId.toDbId(),
+            record.fnFactoryNumber,
         )
     }
 
-    fun markOutletUploadedIfDone(outletId: UUID) {
+    fun markOutletUploadedIfDone(outletId: UUID, maxAttempts: Int) {
         taxcomJdbcTemplate.update(
             """
             UPDATE list_outlets
             SET data_uploaded = 1, date_update = SYSUTCDATETIME(), last_error = NULL
             WHERE id = ? AND NOT EXISTS (
-                SELECT 1 FROM list_kkt WHERE list_outlets_id = ? AND data_uploaded = 0
+                SELECT 1 FROM list_kkt WHERE list_outlets_id = ? AND data_uploaded = 0 AND load_attempts < ?
             )
             """.trimIndent(),
-            outletId,
-            outletId,
+            outletId.toDbId(),
+            outletId.toDbId(),
+            maxAttempts,
         )
     }
 
     fun markOutletUploaded(outletId: UUID) = markUploaded("list_outlets", outletId)
 
-    fun findPendingKkt(limit: Int): List<TaxcomKktRow> =
+    fun findPendingKkt(limit: Int, maxAttempts: Int): List<TaxcomKktRow> =
         taxcomJdbcTemplate.query(
-            "SELECT TOP (?) id, list_outlets_id, name, num_fn FROM list_kkt WHERE data_uploaded = 0 ORDER BY date_create",
+            "SELECT TOP (?) id, list_outlets_id, name, num_fn FROM list_kkt WHERE data_uploaded = 0 AND load_attempts < ? ORDER BY date_create",
             { rs, _ ->
                 TaxcomKktRow(
                     UUID.fromString(rs.getString("id")),
@@ -94,46 +95,49 @@ class TaxcomJdbcRepository(
                 )
             },
             limit,
+            maxAttempts,
         )
 
-    fun upsertShifts(kktId: UUID, records: List<TaxcomShiftRecord>) = records.forEach { record ->
+    fun insertShiftsIfMissing(kktId: UUID, records: List<TaxcomShiftRecord>) = records.forEach { record ->
         taxcomJdbcTemplate.update(
             """
-            MERGE list_shifts AS target
-            USING (SELECT ? AS list_kkt_id, ? AS num) AS source
-            ON target.list_kkt_id = source.list_kkt_id AND target.num = source.num
-            WHEN MATCHED THEN UPDATE SET date_update = SYSUTCDATETIME()
-            WHEN NOT MATCHED THEN INSERT (id, list_kkt_id, num, data_uploaded, date_create, date_update)
-            VALUES (NEWID(), source.list_kkt_id, source.num, 0, SYSUTCDATETIME(), SYSUTCDATETIME());
+            INSERT INTO list_shifts (id, list_kkt_id, num, data_uploaded, date_create, date_update)
+            SELECT CONVERT(varchar(36), NEWID()), ?, ?, 0, SYSUTCDATETIME(), SYSUTCDATETIME()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM list_shifts WHERE list_kkt_id = ? AND num = ?
+            )
             """.trimIndent(),
-            kktId,
+            kktId.toDbId(),
+            record.shiftNumber,
+            kktId.toDbId(),
             record.shiftNumber,
         )
     }
 
-    fun markKktUploadedIfDone(kktId: UUID) {
+    fun markKktUploadedIfDone(kktId: UUID, maxAttempts: Int) {
         taxcomJdbcTemplate.update(
             """
             UPDATE list_kkt
             SET data_uploaded = 1, date_update = SYSUTCDATETIME(), last_error = NULL
             WHERE id = ? AND NOT EXISTS (
-                SELECT 1 FROM list_shifts WHERE list_kkt_id = ? AND data_uploaded = 0
+                SELECT 1 FROM list_shifts WHERE list_kkt_id = ? AND data_uploaded = 0 AND load_attempts < ?
             )
             """.trimIndent(),
-            kktId,
-            kktId,
+            kktId.toDbId(),
+            kktId.toDbId(),
+            maxAttempts,
         )
     }
 
     fun markKktUploaded(kktId: UUID) = markUploaded("list_kkt", kktId)
 
-    fun findPendingShifts(limit: Int): List<TaxcomShiftRow> =
+    fun findPendingShifts(limit: Int, maxAttempts: Int): List<TaxcomShiftRow> =
         taxcomJdbcTemplate.query(
             """
             SELECT TOP (?) s.id, s.list_kkt_id, s.num, k.num_fn
             FROM list_shifts s
             JOIN list_kkt k ON k.id = s.list_kkt_id
-            WHERE s.data_uploaded = 0
+            WHERE s.data_uploaded = 0 AND s.load_attempts < ?
             ORDER BY s.date_create
             """.trimIndent(),
             { rs, _ ->
@@ -145,27 +149,26 @@ class TaxcomJdbcRepository(
                 )
             },
             limit,
+            maxAttempts,
         )
 
-    fun upsertDocuments(shiftId: UUID, records: List<TaxcomDocumentRecord>) = records.forEach { record ->
+    fun insertDocumentsIfMissing(shiftId: UUID, records: List<TaxcomDocumentRecord>) = records.forEach { record ->
+        val rawDocumentList = objectMapper.writeValueAsString(record)
         taxcomJdbcTemplate.update(
             """
-            MERGE receipts_taxcom AS target
-            USING (SELECT ? AS list_shifts_id, ? AS tag_1042) AS source
-            ON target.list_shifts_id = source.list_shifts_id AND target.tag_1042 = source.tag_1042
-            WHEN MATCHED THEN UPDATE SET
-                document_type = ?, document_datetime = ?, number_in_shift = ?, fpd = ?, cashier = ?, taxation_system = ?,
-                accounting_type = ?, total_sum = ?, cash_sum = ?, electronic_sum = ?, noncash_sum = ?, nds0 = ?, nds10 = ?,
-                nds18 = ?, nds20 = ?, nds_calculated10 = ?, nds_calculated20 = ?, nds_no = ?, nds_calculated = ?,
-                sum_prepaid = ?, sum_postpaid = ?, sum_counterclaims = ?, raw_document_list = ?, date_update = SYSUTCDATETIME()
-            WHEN NOT MATCHED THEN INSERT (
+            INSERT INTO receipts_taxcom (
                 id, list_shifts_id, tag_1042, document_type, document_datetime, number_in_shift, fpd, cashier, taxation_system,
                 accounting_type, total_sum, cash_sum, electronic_sum, noncash_sum, nds0, nds10, nds18, nds20, nds_calculated10,
                 nds_calculated20, nds_no, nds_calculated, sum_prepaid, sum_postpaid, sum_counterclaims, raw_document_list,
                 data_uploaded, document_info_uploaded, document_url_uploaded, subjects_uploaded, date_create, date_update
-            ) VALUES (NEWID(), source.list_shifts_id, source.tag_1042, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, SYSUTCDATETIME(), SYSUTCDATETIME());
+            )
+            SELECT CONVERT(varchar(36), NEWID()), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                   0, 0, 0, 0, SYSUTCDATETIME(), SYSUTCDATETIME()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM receipts_taxcom WHERE list_shifts_id = ? AND tag_1042 = ?
+            )
             """.trimIndent(),
-            shiftId,
+            shiftId.toDbId(),
             record.fdNumber,
             record.documentType,
             record.dateTime?.toTimestamp(),
@@ -189,45 +192,25 @@ class TaxcomJdbcRepository(
             record.sumPrepaid,
             record.sumPostpaid,
             record.sumCounterclaims,
-            objectMapper.writeValueAsString(record),
-            record.documentType,
-            record.dateTime?.toTimestamp(),
-            record.numberInShift,
-            record.fpd,
-            record.cashier,
-            record.taxationSystem,
-            record.accountingType,
-            record.sum,
-            record.cash,
-            record.electronic,
-            record.noncashSum,
-            record.nds0,
-            record.nds10,
-            record.nds18,
-            record.nds20,
-            record.ndsCalculated10,
-            record.ndsCalculated20,
-            record.ndsNo,
-            record.ndsCalculated,
-            record.sumPrepaid,
-            record.sumPostpaid,
-            record.sumCounterclaims,
-            objectMapper.writeValueAsString(record),
+            rawDocumentList,
+            shiftId.toDbId(),
+            record.fdNumber,
         )
     }
 
-    fun findPendingReceipts(limit: Int): List<TaxcomReceiptRow> =
+    fun findPendingReceipts(limit: Int, maxAttempts: Int): List<TaxcomReceiptRow> =
         taxcomJdbcTemplate.query(
             """
             SELECT TOP (?) r.id, r.list_shifts_id, k.num_fn, r.tag_1042, r.document_info_uploaded, r.document_url_uploaded, r.subjects_uploaded
             FROM receipts_taxcom r
             JOIN list_shifts s ON s.id = r.list_shifts_id
             JOIN list_kkt k ON k.id = s.list_kkt_id
-            WHERE r.data_uploaded = 0
+            WHERE r.data_uploaded = 0 AND r.load_attempts < ?
             ORDER BY r.date_create
             """.trimIndent(),
             { rs, _ -> rs.toReceiptRow() },
             limit,
+            maxAttempts,
         )
 
     fun updateDocumentInfo(receiptId: UUID, response: TaxcomDocumentInfoResponse) {
@@ -265,7 +248,7 @@ class TaxcomJdbcRepository(
             objectMapper.writeValueAsString(document["1059"]),
             document["1209"]?.toString(),
             objectMapper.writeValueAsString(response),
-            receiptId,
+            receiptId.toDbId(),
         )
         replaceSubjects(receiptId, document["1059"])
     }
@@ -279,7 +262,7 @@ class TaxcomJdbcRepository(
             """.trimIndent(),
             taxcomReceiptUrl,
             objectMapper.writeValueAsString(rawResponse),
-            receiptId,
+            receiptId.toDbId(),
         )
     }
 
@@ -290,21 +273,22 @@ class TaxcomJdbcRepository(
             SET data_uploaded = 1, date_update = SYSUTCDATETIME(), last_error = NULL
             WHERE id = ? AND document_info_uploaded = 1 AND document_url_uploaded = 1 AND subjects_uploaded = 1
             """.trimIndent(),
-            receiptId,
+            receiptId.toDbId(),
         )
     }
 
-    fun markShiftUploadedIfDone(shiftId: UUID) {
+    fun markShiftUploadedIfDone(shiftId: UUID, maxAttempts: Int) {
         taxcomJdbcTemplate.update(
             """
             UPDATE list_shifts
             SET data_uploaded = 1, date_update = SYSUTCDATETIME(), last_error = NULL
             WHERE id = ? AND NOT EXISTS (
-                SELECT 1 FROM receipts_taxcom WHERE list_shifts_id = ? AND data_uploaded = 0
+                SELECT 1 FROM receipts_taxcom WHERE list_shifts_id = ? AND data_uploaded = 0 AND load_attempts < ?
             )
             """.trimIndent(),
-            shiftId,
-            shiftId,
+            shiftId.toDbId(),
+            shiftId.toDbId(),
+            maxAttempts,
         )
     }
 
@@ -314,12 +298,12 @@ class TaxcomJdbcRepository(
         taxcomJdbcTemplate.update(
             "UPDATE $table SET last_error = ?, load_attempts = load_attempts + 1, date_update = SYSUTCDATETIME() WHERE id = ?",
             message?.take(MAX_ERROR_LENGTH),
-            id,
+            id.toDbId(),
         )
     }
 
     private fun replaceSubjects(receiptId: UUID, subjects: Any?) {
-        taxcomJdbcTemplate.update("DELETE FROM subject_calculation WHERE id_receipts_taxcom = ?", receiptId)
+        taxcomJdbcTemplate.update("DELETE FROM subject_calculation WHERE id_receipts_taxcom = ?", receiptId.toDbId())
         val subjectList = subjects as? List<*> ?: emptyList<Any>()
         subjectList.forEachIndexed { index, item ->
             val subject = item as? Map<*, *> ?: emptyMap<Any, Any>()
@@ -328,9 +312,9 @@ class TaxcomJdbcRepository(
                 INSERT INTO subject_calculation (
                     id, id_receipts_taxcom, line_number, tag_1023, tag_1079, tag_1043, tag_1030, tag_1199, tag_1212,
                     raw_subject, date_create
-                ) VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSUTCDATETIME())
+                ) VALUES (CONVERT(varchar(36), NEWID()), ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSUTCDATETIME())
                 """.trimIndent(),
-                receiptId,
+                receiptId.toDbId(),
                 index + 1,
                 subject["1023"]?.toString(),
                 subject["1079"]?.toString(),
@@ -343,14 +327,14 @@ class TaxcomJdbcRepository(
         }
         taxcomJdbcTemplate.update(
             "UPDATE receipts_taxcom SET subjects_uploaded = 1, date_update = SYSUTCDATETIME() WHERE id = ?",
-            receiptId,
+            receiptId.toDbId(),
         )
     }
 
     private fun markUploaded(table: String, id: UUID) {
         taxcomJdbcTemplate.update(
             "UPDATE $table SET data_uploaded = 1, date_update = SYSUTCDATETIME(), last_error = NULL WHERE id = ?",
-            id,
+            id.toDbId(),
         )
     }
 
@@ -365,6 +349,8 @@ class TaxcomJdbcRepository(
             getBoolean("subjects_uploaded"),
         )
 
+    private fun UUID.toDbId(): String = toString()
+
     private fun LocalDateTime.toTimestamp(): Timestamp = Timestamp.valueOf(this)
 
     companion object {
@@ -372,51 +358,55 @@ class TaxcomJdbcRepository(
 
         private val DDL = listOf(
             """
-            IF OBJECT_ID('list_outlets', 'U') IS NULL CREATE TABLE list_outlets (
-                id uniqueidentifier NOT NULL PRIMARY KEY,
+            IF OBJECT_ID('dbo.list_outlets', 'U') IS NULL
+            CREATE TABLE dbo.list_outlets (
+                id varchar(36) NOT NULL PRIMARY KEY,
                 name nvarchar(1000) NULL,
                 data_uploaded bit NOT NULL DEFAULT 0,
                 load_attempts int NOT NULL DEFAULT 0,
                 last_error nvarchar(4000) NULL,
-                date_create datetime2 NOT NULL DEFAULT SYSUTCDATETIME(),
-                date_update datetime2 NULL
+                date_create datetime2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
+                date_update datetime2(6) NULL
             )
             """.trimIndent(),
             """
-            IF OBJECT_ID('list_kkt', 'U') IS NULL CREATE TABLE list_kkt (
-                id uniqueidentifier NOT NULL PRIMARY KEY,
-                list_outlets_id uniqueidentifier NOT NULL,
+            IF OBJECT_ID('dbo.list_kkt', 'U') IS NULL
+            CREATE TABLE dbo.list_kkt (
+                id varchar(36) NOT NULL PRIMARY KEY,
+                list_outlets_id varchar(36) NOT NULL,
                 name nvarchar(1000) NULL,
                 num_fn nvarchar(100) NOT NULL,
                 data_uploaded bit NOT NULL DEFAULT 0,
                 load_attempts int NOT NULL DEFAULT 0,
                 last_error nvarchar(4000) NULL,
-                date_create datetime2 NOT NULL DEFAULT SYSUTCDATETIME(),
-                date_update datetime2 NULL,
+                date_create datetime2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
+                date_update datetime2(6) NULL,
                 CONSTRAINT uq_list_kkt_outlet_fn UNIQUE (list_outlets_id, num_fn)
             )
             """.trimIndent(),
             """
-            IF OBJECT_ID('list_shifts', 'U') IS NULL CREATE TABLE list_shifts (
-                id uniqueidentifier NOT NULL PRIMARY KEY,
-                list_kkt_id uniqueidentifier NOT NULL,
+            IF OBJECT_ID('dbo.list_shifts', 'U') IS NULL
+            CREATE TABLE dbo.list_shifts (
+                id varchar(36) NOT NULL PRIMARY KEY,
+                list_kkt_id varchar(36) NOT NULL,
                 num int NOT NULL,
                 data_uploaded bit NOT NULL DEFAULT 0,
                 load_attempts int NOT NULL DEFAULT 0,
                 last_error nvarchar(4000) NULL,
-                date_create datetime2 NOT NULL DEFAULT SYSUTCDATETIME(),
-                date_update datetime2 NULL,
+                date_create datetime2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
+                date_update datetime2(6) NULL,
                 CONSTRAINT uq_list_shifts_kkt_num UNIQUE (list_kkt_id, num)
             )
             """.trimIndent(),
             """
-            IF OBJECT_ID('receipts_taxcom', 'U') IS NULL CREATE TABLE receipts_taxcom (
-                id uniqueidentifier NOT NULL PRIMARY KEY,
-                list_shifts_id uniqueidentifier NOT NULL,
+            IF OBJECT_ID('dbo.receipts_taxcom', 'U') IS NULL
+            CREATE TABLE dbo.receipts_taxcom (
+                id varchar(36) NOT NULL PRIMARY KEY,
+                list_shifts_id varchar(36) NOT NULL,
                 document_format_date nvarchar(50) NULL,
                 document_format_version nvarchar(50) NULL,
                 document_type nvarchar(50) NULL,
-                document_datetime datetime2 NULL,
+                document_datetime datetime2(6) NULL,
                 number_in_shift nvarchar(50) NULL,
                 fpd nvarchar(100) NULL,
                 cashier nvarchar(1000) NULL,
@@ -467,15 +457,16 @@ class TaxcomJdbcRepository(
                 subjects_uploaded bit NOT NULL DEFAULT 0,
                 load_attempts int NOT NULL DEFAULT 0,
                 last_error nvarchar(4000) NULL,
-                date_create datetime2 NOT NULL DEFAULT SYSUTCDATETIME(),
-                date_update datetime2 NULL,
+                date_create datetime2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
+                date_update datetime2(6) NULL,
                 CONSTRAINT uq_receipts_taxcom_shift_fd UNIQUE (list_shifts_id, tag_1042)
             )
             """.trimIndent(),
             """
-            IF OBJECT_ID('subject_calculation', 'U') IS NULL CREATE TABLE subject_calculation (
-                id uniqueidentifier NOT NULL PRIMARY KEY,
-                id_receipts_taxcom uniqueidentifier NOT NULL,
+            IF OBJECT_ID('dbo.subject_calculation', 'U') IS NULL
+            CREATE TABLE dbo.subject_calculation (
+                id varchar(36) NOT NULL PRIMARY KEY,
+                id_receipts_taxcom varchar(36) NOT NULL,
                 line_number int NOT NULL,
                 tag_1023 nvarchar(max) NULL,
                 tag_1079 nvarchar(max) NULL,
@@ -484,7 +475,7 @@ class TaxcomJdbcRepository(
                 tag_1199 nvarchar(max) NULL,
                 tag_1212 nvarchar(max) NULL,
                 raw_subject nvarchar(max) NULL,
-                date_create datetime2 NOT NULL DEFAULT SYSUTCDATETIME(),
+                date_create datetime2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
                 CONSTRAINT uq_subject_calculation_receipt_line UNIQUE (id_receipts_taxcom, line_number)
             )
             """.trimIndent(),

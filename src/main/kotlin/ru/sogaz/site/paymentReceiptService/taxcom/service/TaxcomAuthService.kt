@@ -22,16 +22,33 @@ class TaxcomAuthService(
 
     @Synchronized
     fun refreshToken(): String {
+        val integratorId = requireNotBlank(taxcomProperties.api.integratorId, "taxcom.api.integrator-id")
+        val login = requireNotBlank(taxcomProperties.api.login, "taxcom.api.login")
+        val password = requireNotBlank(taxcomProperties.api.password, "taxcom.api.password")
+
         log.info("Taxcom export: запрашиваем новый sessionToken")
-        val token = taxcomClient
-            .login(
-                taxcomProperties.api.integratorId,
-                TaxcomLoginRequest(taxcomProperties.api.login, taxcomProperties.api.password),
-            ).sessionToken
+        val token = try {
+            taxcomClient
+                .login(
+                    integratorId,
+                    TaxcomLoginRequest(login, password),
+                ).sessionToken
+        } catch (ex: FeignException) {
+            log.error(
+                "Taxcom export: ошибка Login в Taxcom, status={}, responseBody={}",
+                ex.status(),
+                ex.contentUTF8(),
+                ex,
+            )
+            throw ex
+        }
         sessionToken = token
         log.info("Taxcom export: sessionToken успешно получен")
         return token
     }
+
+    private fun requireNotBlank(value: String, propertyName: String): String =
+        value.takeIf(String::isNotBlank) ?: error("Taxcom export: property $propertyName is empty")
 
     fun <T> executeWithAuthRetry(operationName: String, block: (String) -> T): T {
         val token = getToken()

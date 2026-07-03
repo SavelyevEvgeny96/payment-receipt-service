@@ -178,4 +178,20 @@ data class TaxcomExportStatusResponse(
     val processedShifts: Long,
     val processedReceipts: Long,
     val lastError: String?,
-)
+) {
+    companion object {
+        fun disabled(): TaxcomExportStatusResponse =
+            TaxcomExportStatusResponse(
+                status = "DISABLED",
+                running = false,
+                currentStage = null,
+                startedAt = null,
+                finishedAt = null,
+                processedOutlets = 0,
+                processedKkt = 0,
+                processedShifts = 0,
+                processedReceipts = 0,
+                lastError = "Taxcom export is disabled. Set TAXCOM_EXPORT_ENABLED=true and restart the service.",
+            )
+    }
+}

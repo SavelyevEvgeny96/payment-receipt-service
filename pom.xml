@@ -144,7 +144,7 @@
 		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
 			<artifactId>mssql-jdbc</artifactId>
-			<scope>runtime</scope>
+			<version>12.10.1.jre11</version>
 		</dependency>
 		<dependency>
 			<groupId>org.liquibase</groupId>
