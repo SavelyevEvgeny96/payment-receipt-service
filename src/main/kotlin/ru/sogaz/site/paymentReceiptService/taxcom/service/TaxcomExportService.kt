@@ -49,20 +49,28 @@ class TaxcomExportService(
         taxcomJdbcRepository.ensureSchema()
         taxcomExportRunState.stage(STAGE_LOAD_OUTLETS)
         loadOutlets()
-        taxcomExportRunState.stage(STAGE_PROCESS_OUTLETS)
-        processPendingOutlets()
-        taxcomExportRunState.stage(STAGE_PROCESS_KKT)
-        processPendingKkt()
-        taxcomExportRunState.stage(STAGE_PROCESS_SHIFTS)
-        processPendingShifts()
-        taxcomExportRunState.stage(STAGE_PROCESS_RECEIPTS)
-        processPendingReceipts()
-        taxcomExportRunState.stage(STAGE_FINALIZE_SHIFTS)
-        processPendingShifts()
-        taxcomExportRunState.stage(STAGE_FINALIZE_KKT)
-        processPendingKkt()
-        taxcomExportRunState.stage(STAGE_FINALIZE_OUTLETS)
-        processPendingOutlets()
+
+        var cycle = FIRST_EXPORT_CYCLE
+        while (true) {
+            log.info("Taxcom export: старт цикла обработки cycle={}", cycle)
+            var processedInCycle = 0
+
+            taxcomExportRunState.stage(STAGE_PROCESS_OUTLETS)
+            processedInCycle += processPendingOutlets()
+            taxcomExportRunState.stage(STAGE_PROCESS_KKT)
+            processedInCycle += processPendingKkt()
+            taxcomExportRunState.stage(STAGE_PROCESS_SHIFTS)
+            processedInCycle += processPendingShifts()
+            taxcomExportRunState.stage(STAGE_PROCESS_RECEIPTS)
+            processedInCycle += processPendingReceipts()
+
+            log.info("Taxcom export: завершен цикл обработки cycle={}, processed={}", cycle, processedInCycle)
+            if (processedInCycle == 0) {
+                break
+            }
+            cycle++
+        }
+
         log.info("Taxcom export: ручная выгрузка завершена")
     }
 
@@ -74,28 +82,32 @@ class TaxcomExportService(
         log.info("Taxcom export: список торговых точек сохранен, records={}", response.records.size)
     }
 
-    fun processPendingOutlets() {
+    fun processPendingOutlets(): Int {
         val outlets = taxcomJdbcRepository.findPendingOutlets(taxcomProperties.export.batchSize, taxcomProperties.export.maxAttempts)
         log.info("Taxcom export: найдено торговых точек для обработки: {}", outlets.size)
         outlets.forEach(::processOutlet)
+        return outlets.size
     }
 
-    fun processPendingKkt() {
+    fun processPendingKkt(): Int {
         val kktList = taxcomJdbcRepository.findPendingKkt(taxcomProperties.export.batchSize, taxcomProperties.export.maxAttempts)
         log.info("Taxcom export: найдено ККТ для обработки: {}", kktList.size)
         kktList.forEach(::processKkt)
+        return kktList.size
     }
 
-    fun processPendingShifts() {
+    fun processPendingShifts(): Int {
         val shifts = taxcomJdbcRepository.findPendingShifts(taxcomProperties.export.batchSize, taxcomProperties.export.maxAttempts)
         log.info("Taxcom export: найдено смен для обработки: {}", shifts.size)
         shifts.forEach(::processShift)
+        return shifts.size
     }
 
-    fun processPendingReceipts() {
+    fun processPendingReceipts(): Int {
         val receipts = taxcomJdbcRepository.findPendingReceipts(taxcomProperties.export.batchSize, taxcomProperties.export.maxAttempts)
         log.info("Taxcom export: найдено чеков для догрузки DocumentInfo/DocumentURL: {}", receipts.size)
         receipts.forEach(::processReceipt)
+        return receipts.size
     }
 
     @Transactional("taxcomTransactionManager")
@@ -109,7 +121,7 @@ class TaxcomExportService(
                 return@runCatching
             }
             taxcomJdbcRepository.insertKktIfMissing(outlet.id, response.records)
-            taxcomJdbcRepository.markOutletUploadedIfDone(outlet.id, taxcomProperties.export.maxAttempts)
+            taxcomJdbcRepository.markOutletUploaded(outlet.id)
             log.info("Taxcom export: ККТ по торговой точке outletId={} сохранены, records={}", outlet.id, response.records.size)
         }.onFailure { ex ->
             taxcomJdbcRepository.saveError("list_outlets", outlet.id, ex.message)
@@ -133,12 +145,12 @@ class TaxcomExportService(
             if (response.records.isEmpty()) {
                 log.info("Taxcom export: смены по ККТ kktId={}, fn={} не найдены, помечаем ККТ обработанной", kkt.id, kkt.numFn)
                 taxcomJdbcRepository.markKktUploaded(kkt.id)
-                taxcomJdbcRepository.markOutletUploadedIfDone(kkt.outletId, taxcomProperties.export.maxAttempts)
+                taxcomJdbcRepository.markOutletUploaded(kkt.outletId)
                 return@runCatching
             }
             taxcomJdbcRepository.insertShiftsIfMissing(kkt.id, response.records)
-            taxcomJdbcRepository.markKktUploadedIfDone(kkt.id, taxcomProperties.export.maxAttempts)
-            taxcomJdbcRepository.markOutletUploadedIfDone(kkt.outletId, taxcomProperties.export.maxAttempts)
+            taxcomJdbcRepository.markKktUploaded(kkt.id)
+            taxcomJdbcRepository.markOutletUploaded(kkt.outletId)
             log.info("Taxcom export: смены по ККТ kktId={}, fn={} сохранены, records={}", kkt.id, kkt.numFn, response.records.size)
         }.onFailure { ex ->
             taxcomJdbcRepository.saveError("list_kkt", kkt.id, ex.message)
@@ -155,11 +167,11 @@ class TaxcomExportService(
             if (readRecords == 0) {
                 log.info("Taxcom export: документы по смене shiftId={}, fn={}, shift={} не найдены, помечаем смену обработанной", shift.id, shift.numFn, shift.num)
                 taxcomJdbcRepository.markShiftUploaded(shift.id)
-                taxcomJdbcRepository.markKktUploadedIfDone(shift.kktId, taxcomProperties.export.maxAttempts)
+                taxcomJdbcRepository.markKktUploaded(shift.kktId)
                 return@runCatching
             }
-            taxcomJdbcRepository.markShiftUploadedIfDone(shift.id, taxcomProperties.export.maxAttempts)
-            taxcomJdbcRepository.markKktUploadedIfDone(shift.kktId, taxcomProperties.export.maxAttempts)
+            taxcomJdbcRepository.markShiftUploaded(shift.id)
+            taxcomJdbcRepository.markKktUploaded(shift.kktId)
             log.info("Taxcom export: документы по смене shiftId={} прочитаны из DocumentList, records={}", shift.id, readRecords)
         }.onFailure { ex ->
             taxcomJdbcRepository.saveError("list_shifts", shift.id, ex.message)
@@ -224,7 +236,6 @@ class TaxcomExportService(
                 log.info("Taxcom export: DocumentURL сохранен receiptId={}, fn={}, fd={}", receipt.id, receipt.numFn, receipt.fdNumber)
             }
             taxcomJdbcRepository.markReceiptUploadedIfDone(receipt.id)
-            taxcomJdbcRepository.markShiftUploadedIfDone(receipt.shiftId, taxcomProperties.export.maxAttempts)
         }.onFailure { ex ->
             taxcomJdbcRepository.saveError("receipts_taxcom", receipt.id, ex.message)
             log.error("Taxcom export: ошибка догрузки чека receiptId={}, fn={}, fd={}", receipt.id, receipt.numFn, receipt.fdNumber, ex)
@@ -237,6 +248,7 @@ class TaxcomExportService(
     companion object {
         private val TAXCOM_DATE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
 
+        private const val FIRST_EXPORT_CYCLE = 1
         private const val FIRST_DOCUMENT_PAGE = 1
         private const val MIN_DOCUMENT_PAGE_SIZE = 1
         private const val MAX_DOCUMENT_PAGE_SIZE = 1500
@@ -247,8 +259,5 @@ class TaxcomExportService(
         private const val STAGE_PROCESS_KKT = "PROCESS_KKT"
         private const val STAGE_PROCESS_SHIFTS = "PROCESS_SHIFTS"
         private const val STAGE_PROCESS_RECEIPTS = "PROCESS_RECEIPTS"
-        private const val STAGE_FINALIZE_SHIFTS = "FINALIZE_SHIFTS"
-        private const val STAGE_FINALIZE_KKT = "FINALIZE_KKT"
-        private const val STAGE_FINALIZE_OUTLETS = "FINALIZE_OUTLETS"
     }
 }
