@@ -132,3 +132,29 @@ config:
 scheduled:
   task:
     cron: ${CHECK_STATUS_CRON:0 * * * * *}
+taxcom:
+  api:
+    base-url: ${TAXCOM_API_BASE_URL:https://api-lk-ofd.taxcom.ru}
+    integrator-id: ${TAXCOM_INTEGRATOR_ID:}
+    login: ${TAXCOM_LOGIN:}
+    password: ${TAXCOM_PASSWORD:}
+  datasource:
+    url: ${TAXCOM_DB_URL:jdbc:sqlserver://localhost:1433;databaseName=taxcom;encrypt=true;trustServerCertificate=true}
+    username: ${TAXCOM_DB_USERNAME:sa}
+    password: ${TAXCOM_DB_PASSWORD:}
+  export:
+    enabled: ${TAXCOM_EXPORT_ENABLED:false}
+    begin: ${TAXCOM_EXPORT_BEGIN:2020-01-01T00:00:00}
+    batch-size: ${TAXCOM_EXPORT_BATCH_SIZE:500}
+    list-page-size: ${TAXCOM_EXPORT_LIST_PAGE_SIZE:1500}
+    document-page-size: ${TAXCOM_EXPORT_DOCUMENT_PAGE_SIZE:1000}
+    shift-list-workers: ${TAXCOM_EXPORT_SHIFT_LIST_WORKERS:5}
+    receipt-workers: ${TAXCOM_EXPORT_RECEIPT_WORKERS:10}
+    receipt-claim-batch-size: ${TAXCOM_EXPORT_RECEIPT_CLAIM_BATCH_SIZE:20}
+    receipt-worker-idle-delay-ms: ${TAXCOM_EXPORT_RECEIPT_WORKER_IDLE_DELAY_MS:2000}
+    receipt-lock-timeout-minutes: ${TAXCOM_EXPORT_RECEIPT_LOCK_TIMEOUT_MINUTES:30}
+    max-attempts: ${TAXCOM_EXPORT_MAX_ATTEMPTS:3}
+  proxy:
+    enabled: ${TAXCOM_PROXY_ENABLED:false}
+    host: ${TAXCOM_PROXY_HOST:}
+    port: ${TAXCOM_PROXY_PORT:0}
